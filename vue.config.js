@@ -1,5 +1,5 @@
 module.exports = {
-  publicPath: '/xtable',
+  publicPath: '/xTable',
   outputDir:'docs',
   productionSourceMap: process.env.NODE_ENV === 'dev',
   configureWebpack: {
