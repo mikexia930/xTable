@@ -1,20 +1,27 @@
 {
-  "name": "v1.0.0",
-  "version": "0.1.0",
-  "private": true,
+  "name": "x-table-vue",
+  "description": "Vue component for table",
+  "version": "1.0.1",
+  "keywords": [
+    "vue",
+    "component",
+    "table",
+    "drag header",
+    "sort header",
+    "拖动排序",
+    "表格拖动",
+    "表头固定"
+  ],
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "lib": "vue-cli-service build --target lib --name xtable --dest lib packages/index.js"
   },
-  "dependencies": {
-    "ant-design-vue": "^1.7.6",
-    "core-js": "^3.6.5",
-    "lodash": "^4.17.21",
-    "normalize.css": "^8.0.1",
-    "sortablejs": "^1.13.0",
-    "vue": "^2.6.11"
-  },
+  "main": "lib/xtable.umd.js",
+  "dependencies": {},
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
@@ -26,6 +33,11 @@
     "eslint-plugin-vue": "^6.2.2",
     "less": "^3.0.4",
     "less-loader": "^6.0.0",
-    "vue-template-compiler": "^2.6.11"
+    "vue-template-compiler": "^2.6.11",
+    "ant-design-vue": "^1.7.6",
+    "core-js": "^3.6.5",
+    "lodash": "^4.17.21",
+    "sortablejs": "^1.13.0",
+    "vue": "^2.6.11"
   }
 }

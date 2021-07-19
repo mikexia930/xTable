@@ -14,57 +14,44 @@
             <thead class="x-head-dom">
               <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
                 <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                  <x-td
-                    :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                    from="th"
-                    :is-sticky="isSticky"
-                    :no-wrap="config.noWrap"
-                    :row-index="titleIndex"
-                    :row-item="titleItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
-                    :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
-                    :column-length="tableColumns.length"
-                    :drag-columns="dragColumns"
-                    :resize-columns="resizeColumns"
+                  <td
+                    v-if="titleItem[columnItem.dataIndex].colSpan && titleItem[columnItem.dataIndex].rowSpan"
+                    :colspan="titleItem[columnItem.dataIndex].colSpan > 1 ? titleItem[columnItem.dataIndex].colSpan : null"
+                    :rowspan="titleItem[columnItem.dataIndex].rowSpan > 1 ? titleItem[columnItem.dataIndex].colSpan : null"
+                    :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
+                    :group="titleIndex === 0 ? (columnItem.dragGroup || '') : ''"
+                    :class="{
+                      'x-drag-dom': titleIndex === 0 && dragColumns.includes(columnItem.dataIndex),
+                      'x-fixed-column': getStickyDirection(columnItem.dataIndex)
+                    }"
+                    :style="getStickyDirection(columnItem.dataIndex) ? {
+                      [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (tableColumnsHead.length - 1), getStickyDirection(columnItem.dataIndex)),
+                      width: `${ colgroupData[columnIndex].width }`,
+                      zIndex: 2 + (200-columnIndex)
+                    } : {}"
                   >
-                    <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                      <slot
-                        :name="`th-${columnItem.dataIndex}`"
-                        :record="record"
-                        :text="text"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot :name="`th-name-${columnItem.dataIndex}`" :record="columnItem" :text="titleItem[columnItem.dataIndex].value">
+                      <span>{{ titleItem[columnItem.dataIndex].value }}</span>
+                    </slot>
+                    <span class="x-sort" v-if="columnItem.sort">
                       <slot
                         :name="`th-sort-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
+                        :record="columnItem"
+                        :dataIndex="columnItem.dataIndex"
                       ></slot>
-                    </template>
-                    <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-search-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-filter-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:th-drag>
-                      <slot :name="`th-drag`"></slot>
-                    </template>
-                    <template v-slot:th-resize>
-                      <slot :name="`th-resize`"></slot>
-                    </template>
-                  </x-td>
+                    </span>
+                    <span class="x-search" v-if="titleIndex === 0 && columnItem.serach" :tabIndex="titleIndex">
+                       <slot
+                         :name="`th-search-${columnItem.dataIndex}`"
+                         :record="columnItem"
+                         :dataIndex="columnItem.dataIndex"
+                       ></slot>
+                    </span>
+                    <span class="x-drag-dom-handle" v-if="titleIndex === 0 && dragColumns.includes(columnItem.dataIndex)">
+                      <slot name="drag"></slot>
+                    </span>
+                    <span class="x-resize-dom-handle" v-if="titleIndex === 0 && resizeColumns.includes(columnItem.dataIndex)"></span>
+                  </td>
                 </template>
               </tr>
             </thead>
@@ -96,57 +83,44 @@
             <thead v-if="isUseSingleTable" class="x-head-dom">
               <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
                 <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                  <x-td
-                    :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                    from="th"
-                    :is-sticky="isSticky"
-                    :no-wrap="config.noWrap"
-                    :row-index="titleIndex"
-                    :row-item="titleItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
-                    :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
-                    :column-length="tableColumns.length"
-                    :drag-columns="dragColumns"
-                    :resize-columns="resizeColumns"
+                  <td
+                    v-if="titleItem[columnItem.dataIndex].colSpan && titleItem[columnItem.dataIndex].rowSpan"
+                    :colspan="titleItem[columnItem.dataIndex].colSpan > 1 ? titleItem[columnItem.dataIndex].colSpan : null"
+                    :rowspan="titleItem[columnItem.dataIndex].rowSpan > 1 ? titleItem[columnItem.dataIndex].colSpan : null"
+                    :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
+                    :group="titleIndex === 0 ? (columnItem.dragGroup || '') : ''"
+                    :class="{
+                        'x-drag-dom': titleIndex === 0 && dragColumns.includes(columnItem.dataIndex),
+                        'x-fixed-column': getStickyDirection(columnItem.dataIndex)
+                      }"
+                    :style="getStickyDirection(columnItem.dataIndex) ? {
+                        [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (tableColumnsHead.length - 1), getStickyDirection(columnItem.dataIndex)),
+                        width: `${ colgroupData[columnIndex].width }`,
+                        zIndex: 2 + (200-columnIndex)
+                      } : {}"
                   >
-                    <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                      <slot
-                        :name="`th-${columnItem.dataIndex}`"
-                        :record="record"
-                        :text="text"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot :name="`th-name-${columnItem.dataIndex}`" :record="columnItem" :text="titleItem[columnItem.dataIndex].value">
+                      <span>{{ titleItem[columnItem.dataIndex].value }}</span>
+                    </slot>
+                    <span class="x-sort" v-if="columnItem.sort">
                       <slot
                         :name="`th-sort-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
+                        :record="columnItem"
+                        :dataIndex="columnItem.dataIndex"
                       ></slot>
-                    </template>
-                    <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-search-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-filter-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:th-drag>
-                      <slot :name="`th-drag`"></slot>
-                    </template>
-                    <template v-slot:th-resize>
-                      <slot :name="`th-resize`"></slot>
-                    </template>
-                  </x-td>
+                      </span>
+                    <span class="x-search" v-if="titleIndex === 0 && columnItem.serach" :tabIndex="titleIndex">
+                       <slot
+                         :name="`th-search-${columnItem.dataIndex}`"
+                         :record="columnItem"
+                         :dataIndex="columnItem.dataIndex"
+                       ></slot>
+                      </span>
+                    <span class="x-drag-dom-handle" v-if="titleIndex === 0 && dragColumns.includes(columnItem.dataIndex)">
+                      <slot name="drag"></slot>
+                    </span>
+                    <span class="x-resize-dom-handle" v-if="titleIndex === 0 && resizeColumns.includes(columnItem.dataIndex)"></span>
+                  </td>
                 </template>
               </tr>
             </thead>
@@ -163,28 +137,28 @@
               <template v-else>
                 <tr v-for="(rowItem, rowIndex) in showData" :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
                   <template v-for="(columnItem, columnIndex) in tableColumns">
-                    <x-td
-                      :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
-                      from="td"
-                      :is-sticky="isSticky"
-                      :no-wrap="config.noWrap"
-                      :row-index="rowIndex"
-                      :row-item="rowItem"
-                      :column-index="columnIndex"
-                      :column-item="columnItem"
-                      :colgroup-data="colgroupData"
-                      :sticky-left-columns="stickyLeftColumns"
-                      :sticky-right-columns="stickyRightColumns"
-                      :column-length="tableColumns.length"
+                    <td
+                      v-if="rowItem[columnItem.dataIndex].colSpan && rowItem[columnItem.dataIndex].rowSpan"
+                      :colspan="rowItem[columnItem.dataIndex].colSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
+                      :rowspan="rowItem[columnItem.dataIndex].rowSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
+                      :key="`td-${rowIndex}-${columnIndex}`"
+                      :class="{'x-fixed-column': getStickyDirection(columnItem.dataIndex),'x-left': columnItem.align === 'left', 'x-right': columnItem.align === 'right' }"
+                      :style="getStickyDirection(columnItem.dataIndex) ? {
+                          [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (tableColumns.length - 1), getStickyDirection(columnItem.dataIndex)),
+                          width: `${ colgroupData[columnIndex].width }`,
+                          zIndex: 1 + (100-columnIndex)
+                        } : {}"
                     >
-                      <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text}">
-                        <slot
-                          :name="`td-${columnItem.dataIndex}`"
-                          :record="record"
-                          :text="text"
-                        ></slot>
-                      </template>
-                    </x-td>
+                      <div
+                        :title="config.noWrap ? rowItem[columnItem.dataIndex].value : null"
+                        :class="config.noWrap ? 'x-td-nowrap' : 'x-td'"
+                        :style="{ width: getTdWidth(columnIndex, rowItem[columnItem.dataIndex].colSpan) }"
+                      >
+                        <slot :name="`td-${columnItem.dataIndex}`" :record="rowItem" :text="rowItem[columnItem.dataIndex].value">
+                          {{ rowItem[columnItem.dataIndex].value }}
+                        </slot>
+                      </div>
+                    </td>
                   </template>
                 </tr>
               </template>
@@ -192,28 +166,28 @@
             <tfoot v-if="footerData && footerData.length > 0">
               <tr v-for="(rowItem, rowIndex) in footerShowData" :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
                 <template v-for="(columnItem, columnIndex) in tableColumns">
-                  <x-td
-                    :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
-                    from="tf"
-                    :is-sticky="isSticky"
-                    :no-wrap="config.noWrap"
-                    :row-index="rowIndex"
-                    :row-item="rowItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
-                    :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
-                    :column-length="tableColumns.length"
+                  <td
+                    v-if="rowItem[columnItem.dataIndex].colSpan && rowItem[columnItem.dataIndex].rowSpan"
+                    :colspan="rowItem[columnItem.dataIndex].colSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
+                    :rowspan="rowItem[columnItem.dataIndex].rowSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
+                    :key="`tf-${rowIndex}-${columnIndex}`"
+                    :class="{'x-fixed-column': getStickyDirection(columnItem.dataIndex),'x-left': columnItem.align === 'left', 'x-right': columnItem.align === 'right' }"
+                    :style="getStickyDirection(columnItem.dataIndex) ? {
+                      [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (tableColumns.length - 1), getStickyDirection(columnItem.dataIndex)),
+                      width: `${ colgroupData[columnIndex].width }`,
+                      zIndex: 3 + (100-columnIndex)
+                    } : {}"
                   >
-                    <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
-                      <slot
-                        :name="`tf-${columnItem.dataIndex}`"
-                        :record="record"
-                        :text="text"
-                      ></slot>
-                    </template>
-                  </x-td>
+                    <div
+                      :title="config.noWrap ? rowItem[columnItem.dataIndex].value : null"
+                      :class="config.noWrap ? 'x-td-nowrap' : 'x-td'"
+                      :style="{ width: getTdWidth(columnIndex, rowItem[columnItem.dataIndex].colSpan) }"
+                    >
+                      <slot :name="`tf-${columnItem.dataIndex}`" :record="rowItem" :text="rowItem[columnItem.dataIndex].value">
+                        {{ rowItem[columnItem.dataIndex].value }}
+                      </slot>
+                    </div>
+                  </td>
                 </template>
               </tr>
             </tfoot>
@@ -259,7 +233,7 @@ export default {
     sortData: Object, // 排序列数据 { dataIndex: 列索引, sortType: 排序方式 init/up/down }，同一时间只能对一个列排序
     searchData: Object, // { key1: string1, key2: string2 } key 为 dataIndex, string为查询关键词，多个查询会叠加作用
     filterData: Object, // { key1: array1, key2: array2 } key 为 dataIndex, array为已选中的值数组，多个筛选会叠加作用
-  },
+  },x
   components: {
     XTd,
   },
@@ -514,10 +488,7 @@ export default {
         this.isFixedHeader = false;
       }
       this.$nextTick(() => {
-        const fixHeaderDom = this.getDomMap('dynamic', 'header');
-        if (fixHeaderDom) {
-          fixHeaderDom.style.display = bottom < 5 ? 'none' : 'block';
-        }
+        this.getDomMap('dynamic', 'header').style.display = bottom < 5 ? 'none' : 'block';
       });
     },
     /**
@@ -609,10 +580,10 @@ export default {
      * @param e 拖动的event
      */
     doResize(e) {
-      const domIndex = e.target.parentNode.parentNode.cellIndex;
+      const domIndex = e.target.parentNode.cellIndex;
       this.initResize = {
         index: domIndex,
-        width: parseInt(e.target.parentElement.parentElement.offsetWidth, 10),
+        width: parseInt(e.target.parentElement.offsetWidth, 10),
         x: e.clientX,
         y: e.clientY,
       };
@@ -675,73 +646,10 @@ export default {
               const oldItem = that.tableColumns[oldIndex];
               that.tableColumns.splice(newIndex, 1, oldItem);
               that.tableColumns.splice(oldIndex, 1, newItem);
+              console.log(that.tableColumns);
             }
           },
         });
-      }
-    },
-    /**
-     * 是否需要搜索
-     */
-    isHasSearch() {
-      let backData = false;
-      if (this.searchData) {
-        Object.keys(this.searchData).forEach((key) => {
-          if (this.searchData[key]) {
-            backData = true;
-            return false;
-          }
-          return true;
-        });
-      }
-      return backData;
-    },
-    /**
-     * 是否需要筛选
-     */
-    isHasFilter() {
-      let backData = false;
-      if (this.filterData) {
-        Object.keys(this.filterData).forEach((key) => {
-          if (this.filterData[key] && this.filterData[key].length > 0) {
-            backData = true;
-            return false;
-          }
-          return true;
-        });
-      }
-      return backData;
-    },
-    /**
-     * 排序状态变为 init 时候，数据的初始化，去 search 和 filter, 或者 filter 后，去计算其它的
-     * @param from 上一步操作是什么 sort/filter/search
-     */
-    doReInitData(from) {
-      if (this.dataUse && this.dataUse.length > 1) {
-        switch (from) {
-          case 'search':
-            if (this.isHasFilter()) {
-              this.dataUse = this.getFilterData(this.dataUse, this.filterData);
-            }
-            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
-            break;
-          case 'filter':
-            if (this.isHasSearch()) {
-              this.dataUse = this.getSearchData(this.dataUse, this.searchData);
-            }
-            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
-            break;
-          case 'sort':
-            if (this.isHasFilter()) {
-              this.dataUse = this.getFilterData(this.dataUse, this.filterData);
-            }
-            if (this.isHasSearch()) {
-              this.dataUse = this.getSearchData(this.dataUse, this.searchData);
-            }
-            break;
-          default:
-            break;
-        }
       }
     },
     /**
@@ -749,18 +657,7 @@ export default {
      * @param searchData { key: value } key 对应 dataIndex, value(string) 对应查询关键词
      */
     doSearch(searchData) {
-      this.dataUse = this.getSearchData(this.data, searchData);
-      this.doReInitData('search');
-      this.resetPage('search');
-    },
-    /**
-     * 表头搜索数据计算
-     * @param data 需要查询的数据
-     * @param searchData { key: value } key 对应 dataIndex, value(string) 对应查询关键词
-     * @return {array}
-     */
-    getSearchData(data, searchData) {
-      return data.filter((itemData) => {
+      this.dataUse = this.data.filter((itemData) => {
         let backData = true;
         Object.keys(searchData).forEach((key) => {
           if (searchData[key]) {
@@ -773,24 +670,17 @@ export default {
         });
         return backData;
       });
+      if (this.dataUse && this.dataUse.length > 1) {
+        this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+      }
+      this.resetPage('search');
     },
     /**
      * 表头筛选数据，筛选完对对结果数据排序
      * @param filterData { key: value } key 对应 dataIndex，value(array) 对应已选中的
      */
     doFilter(filterData) {
-      this.dataUse = this.getFilterData(this.data, filterData);
-      this.doReInitData('filter');
-      this.resetPage('filter');
-    },
-    /**
-     * 表头筛选数据计算
-     * @param data 需要筛选的数据
-     * @param filterData { key: value } key 对应 dataIndex, value(array) 对应已选中的
-     * @return {array}
-     */
-    getFilterData(data, filterData) {
-      return data.filter((itemData) => {
+      this.dataUse = this.data.filter((itemData) => {
         let backData = true;
         Object.keys(filterData).forEach((key) => {
           if (filterData[key] && filterData[key].length > 0) {
@@ -803,6 +693,10 @@ export default {
         });
         return backData;
       });
+      if (this.dataUse && this.dataUse.length > 1) {
+        this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+      }
+      this.resetPage('filter');
     },
     /**
      *  表头排序
@@ -818,7 +712,6 @@ export default {
         case 'init':
         default:
           this.dataUse = [...this.data];
-          this.doReInitData('sort');
           break;
       }
       this.toggleSortStatus(dataIndex, sortType);
@@ -946,8 +839,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
-@bgColor: #cccccc;
 @lineColor: #cccccc;
+@bgColor: #cccccc;
 @headerBgColor: #eeeeee;
 .x-table-wrapper {
   -webkit-touch-callout: none;
@@ -991,7 +884,11 @@ export default {
     .x-table-border {
       border: 1px solid @lineColor;
     }
-    /deep/ .x-resize-dom-handle {
+    .x-search, .x-sort{
+      position: relative;
+      cursor: pointer;
+    }
+    .x-resize-dom-handle {
       position: absolute;
       right: 1px;
       top: 10px;
@@ -1001,7 +898,7 @@ export default {
       background-color: @bgColor;
       cursor: col-resize;
     }
-    /deep/ .x-drag-dom-handle{
+    .x-drag-dom-handle{
       position: absolute;
       left: 3px;
       display: none;
@@ -1011,14 +908,14 @@ export default {
       border-collapse: collapse;
       table-layout: fixed;
     }
-    /deep/ .x-head-dom {
+    .x-head-dom {
       td {
         position: sticky;
         top: 0;
         z-index: 3;
         background-color: @headerBgColor;
         &:hover{
-         .x-resize-dom-handle, .x-drag-dom-handle {
+          .x-resize-dom-handle, .x-drag-dom-handle {
             display: inline-block;
           }
         }
@@ -1034,6 +931,27 @@ export default {
       position: relative;
       &.x-fixed-column {
         position: sticky;
+      }
+      &.x-left {
+        text-align: left !important;
+        >div {
+          padding: 0 8px;
+        }
+      }
+      &.x-right {
+        text-align: right !important;
+        >div {
+          padding: 0 8px;
+        }
+      }
+      .x-td {
+        white-space:pre-wrap;
+        word-wrap:break-word;
+      }
+      .x-td-nowrap{
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       &:after{
         content: '';
