@@ -3,7 +3,7 @@
 > 表格列拖动改变宽度，表头列互换，固定表头，合并单元格。
 > 源码有完整示例代码。
 
-[Demo](https://mikexia930.github.io/xtable/)
+[Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***

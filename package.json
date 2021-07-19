@@ -21,7 +21,13 @@
     "lib": "vue-cli-service build --target lib --name xtable --dest lib packages/index.js"
   },
   "main": "lib/xtable.umd.js",
-  "dependencies": {},
+  "dependencies": {
+    "ant-design-vue": "^1.7.6",
+    "core-js": "^3.6.5",
+    "lodash": "^4.17.21",
+    "sortablejs": "^1.13.0",
+    "vue": "^2.6.11"
+  },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
@@ -33,11 +39,6 @@
     "eslint-plugin-vue": "^6.2.2",
     "less": "^3.0.4",
     "less-loader": "^6.0.0",
-    "vue-template-compiler": "^2.6.11",
-    "ant-design-vue": "^1.7.6",
-    "core-js": "^3.6.5",
-    "lodash": "^4.17.21",
-    "sortablejs": "^1.13.0",
-    "vue": "^2.6.11"
+    "vue-template-compiler": "^2.6.11"
   }
 }
