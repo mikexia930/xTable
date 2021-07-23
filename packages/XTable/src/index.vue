@@ -438,7 +438,9 @@ export default {
         this.resizeThrottle = this.getResize;// throttle(this.getResize, 1); 使用的lodash的throttle，打开需安装lodash
         const resizeDom = document.querySelectorAll('.x-resize-dom-handle');
         resizeDom.forEach((dom) => {
-          dom.addEventListener('mousedown', this.doResize, false);
+          // dom.addEventListener('mousedown', this.doResize, false);
+          const domCopy = dom;
+          domCopy.onpointerdown = this.doResize;
         });
       }
       // 如果存在列拖动交换的列
@@ -616,8 +618,11 @@ export default {
         x: e.clientX,
         y: e.clientY,
       };
-      document.documentElement.addEventListener('mousemove', this.resizeThrottle, false);
-      document.documentElement.addEventListener('mouseup', this.stopResize, false);
+      // document.documentElement.addEventListener('mousemove', this.resizeThrottle, false);
+      // document.documentElement.addEventListener('mouseup', this.stopResize, false);
+      e.target.onpointermove = this.resizeThrottle;
+      e.target.setPointerCapture(e.pointerId);
+      e.target.onpointerup = this.stopResize;
     },
     /**
      * 开始拖动列宽，区间为 config里的最大、最小值
@@ -643,9 +648,11 @@ export default {
     /**
      * 结束拖动更改列宽，去除监听事件
      */
-    stopResize() {
-      document.documentElement.removeEventListener('mousemove', this.resizeThrottle, false);
-      document.documentElement.removeEventListener('mouseup', this.stopResize, false);
+    stopResize(e) {
+      e.target.onpointermove = null;
+      e.target.releasePointerCapture(e.pointerId);
+      // document.documentElement.removeEventListener('mousemove', this.resizeThrottle, false);
+      // document.documentElement.removeEventListener('mouseup', this.stopResize, false);
     },
     /**
      * 表头互换，借助第三方sortablejs
