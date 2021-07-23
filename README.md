@@ -7,13 +7,14 @@
 
 ### 版本
 ***
-* v1.0.2
+* v1.0.3
 
 ### 基于
 ***
 * vue2
 * sortablejs
-* css sticky
+* css sticky [浏览器支持](https://developer.mozilla.org/zh-CN/docs/Web/CSS/position)
+* setPointerCapture [浏览器支持](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/setPointerCapture)
 
 ### 安装
 ***
