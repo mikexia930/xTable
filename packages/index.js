@@ -1,9 +1,10 @@
 // 导入组件
-import XTable from './XTable';
+import XTableInstall from './XTable';
+import XTable from './XTable/src';
 
 // 组件列表
 const components = [
-  XTable,
+  XTableInstall,
 ];
 
 // 定义 install 方法，接收 Vue 作为参数。如果使用 use 注册插件，那么所有的组件都会被注册
@@ -25,3 +26,4 @@ export default {
   // 以下是具体的组件列表
   ...components,
 };
+export { XTable };
