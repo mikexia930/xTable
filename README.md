@@ -7,7 +7,7 @@
 
 ### 版本
 ***
-* v1.0.3
+* v1.0.5
 
 ### 基于
 ***
@@ -19,16 +19,23 @@
 ### 安装
 ***
 ````
+npm install sortablejs
 npm install x-table-vue
 ````
 
 ### 使用
 ***
-**在main.js中引入**
+**全局引入**
+
+在main.js中引入
 ````
 import xTable from 'x-table-vue';
 vue.use(xTable);
 ````
+**或者 在组件中引入**
+```
+import { XTable } from 'x-table-vue';
+```
 
 **组件中使用**
 ````
