@@ -2,6 +2,7 @@
   <div id="app">
     <div style="height: 200px"></div>
     <x-table
+      :is-use-storage="false"
       :is-use-single-table="isUseSingleTable"
       :is-fix-header="isFixHeader"
       :is-sticky="isSticky"
@@ -11,10 +12,12 @@
       :title="tableHeaderTitle"
       :headerData="tableHeaderData"
       :footerData="tableFooterData"
+      :expand-data="tableExpandData"
       :page-data="pageData"
       :sort-data="sortData"
       :search-data="searchData"
       :filter-data="filterData"
+      :pivot-table="['c1', 'c2']"
       @handleTable="handleTable"
     >
       <template v-slot:th-drag>
@@ -22,6 +25,9 @@
       </template>
       <template #td-c1="{ record, text }">
         <div class="column-sticky">{{ text }}</div>
+      </template>
+      <template #td-operator="{ record }">
+        <div style="cursor: pointer" v-if="tableExpandData[record.id]" @click="handleExpand(record)">{{ tableExpandData[record.id] && tableExpandData[record.id].isOpen ? 'CLOSE' : 'OPEN' }}-{{ record.id }}</div>
       </template>
       <template #th-sort-c1="{ record, dataIndex }">
         <span class="sort_icon"  @click="handleSort(dataIndex, record.sort)">
@@ -79,29 +85,113 @@
             @showSizeChange="handlePageSizeChange"
           />
         </div>
-      </template>>
+      </template>
     </x-table>
-    <div style="height: 800px"></div>
+    <div style="height: 1200px"></div>
   </div>
 </template>
 
 <script>
-function generateTableData(listLength, columnLength) {
+function generateTableData(listLength, columnLength, idPrefix = '') {
   const arr = [];
   for (let i = 1; i <= listLength; i += 1) {
     const obj = {
-      id: i,
+      id: idPrefix ? `${idPrefix}${i}` : i,
     };
     for (let j = 1; j <= columnLength; j += 1) {
-      obj[`c${j}`] = {
-        colSpan: 1,
-        rowSpan: 1,
-        value: `${i} * ${j} = ${i * j}`,
-      };
+      /*
+      if (j === 1) {
+        if (i === 1) {
+          obj[`c${j}`] = {
+            colSpan: 1,
+            rowSpan: 25,
+            value: `${i} * ${j} = ${i * j}`,
+          };
+        } else if (i < 26) {
+          obj[`c${j}`] = {
+            colSpan: 1,
+            rowSpan: 0,
+            value: `${i} * ${j} = ${i * j}`,
+          };
+        } else {
+          obj[`c${j}`] = {
+            colSpan: 1,
+            rowSpan: 1,
+            value: `${i} * ${j} = ${i * j}`,
+          };
+        }
+      } else {
+        obj[`c${j}`] = {
+          colSpan: 1,
+          rowSpan: 1,
+          value: `${i} * ${j} = ${i * j}`,
+        };
+      }
+      */
+      if (j === 1) {
+        if (i < 25) {
+          obj[`c${j}`] = '1';
+        } else {
+          obj[`c${j}`] = `${i} * ${j} = ${i * j}`;
+        }
+      } else if (j === 2) {
+        if (i < 5) {
+          obj[`c${j}`] = '2';
+        } else if (i < 20) {
+          obj[`c${j}`] = '3';
+        } else {
+          obj[`c${j}`] = `${i} * ${j} = ${i * j}`;
+        }
+      } else {
+        obj[`c${j}`] = `${i} * ${j} = ${i * j}`;
+      }
     }
     arr.push(obj);
   }
   return arr;
+}
+
+function generateTableExpandData(listLength, columnLength) {
+  // expand_rowKey 作为打开标识
+  const expandObj = {};
+  const spanItemNumber = 30;
+  for (let i = 25; i <= listLength; i += 1) {
+    const expandItem = { // 必须以 'ex-' 开头
+      isOpen: false,
+      type: '', // span 合并单元格只支持slot / data 合并到当前数据里
+      data: [], // data 时为数组 [] 格式如 tableData，span 时为 { rowKey: ''， data: {} } ，如 table 单列数据
+    };
+    let itemLength = 1;
+    if (i < spanItemNumber) {
+      expandItem.type = 'span';
+      itemLength = 1;
+    } else {
+      expandItem.type = 'data';
+      itemLength = Math.ceil(Math.random() * 5);
+    }
+    expandItem.data = generateTableData(itemLength, columnLength, `ex-${i}-`);
+    if (i < spanItemNumber) {
+      let index = 0;
+      Object.keys(expandItem.data[0]).forEach((key) => {
+        if (key !== 'id') {
+          if (index === 0) {
+            expandItem.data[0][key] = {
+              ...expandItem.data[0][key],
+              colSpan: columnLength,
+            };
+          } else {
+            expandItem.data[0][key] = {
+              ...expandItem.data[0][key],
+              colSpan: 0,
+            };
+          }
+          index += 1;
+        }
+      });
+    }
+    expandObj[i] = expandItem;
+  }
+  return expandObj;
 }
 
 function generateTableFooterData(listLength, columnLength) {
@@ -153,6 +243,11 @@ function generateTableTitle(columnLength) {
       value: `T${j}`,
     };
   }
+  obj.operator = {
+    colSpan: 1,
+    rowSpan: 1,
+    value: 'operator',
+  };
   arr.push(obj);
   return arr;
 }
@@ -164,7 +259,12 @@ function generateColumnData(labelLength) {
       dataIndex: `c${i}`,
       dragGroup: '', // 只在第一行绑定
       resizeable: true, // 只在第一行绑定
-      align: '', // text-align
+      align: {
+        title: '',
+        header: '',
+        content: '',
+        footer: '',
+      }, // text-align
     };
     if (i < 3) {
       obj.sticky = 'left';
@@ -179,10 +279,23 @@ function generateColumnData(labelLength) {
       obj.dragGroup = '';
     } else {
       obj.dragGroup = 'b1';
-      obj.align = 'right';
+      obj.align.content = 'right';
     }
     arr.push(obj);
   }
+  arr.push({
+    dataIndex: 'operator',
+    sticky: 'right',
+    width: '100px',
+    dragGroup: '',
+    resizeable: false,
+    align: {
+      title: '',
+      header: '',
+      content: '',
+      footer: '',
+    },
+  });
   return arr;
 }
 
@@ -193,6 +306,8 @@ export default {
     this.tableData = generateTableData(100, 30);
     this.tableHeaderTitle = generateTableTitle(30);
     this.tableFooterData = generateTableFooterData(2, 30);
+    this.tableExpandData = generateTableExpandData(100, 30);
+    console.log(this.tableData, this.tableColumns, this.tableHeaderTitle, this.tableExpandData);
   },
   data() {
     return {
@@ -203,6 +318,7 @@ export default {
       tableHeaderData: [], // 插在thead里的数据，默认只显示 headTitle
       tableFooterData: [], // 插在footer里的数据
       tableHeaderTitle: [], // 表头
+      tableExpandData: {}, // 表格扩展
       tableData: [],
       tableConfig: {
         key: 'table',
@@ -283,7 +399,7 @@ export default {
     },
     handleFilter(dataIndex) {
       this.showSearchOrFilterDrop('filter', dataIndex, false);
-      this.filterData[dataIndex] = this.filterSelected[dataIndex].value;
+      this.filterSelected[dataIndex] = this.filterSelected[dataIndex].value;
     },
     showSearchOrFilterDrop(from, dataIndex, visible) {
       if (from === 'search') {
@@ -313,62 +429,68 @@ export default {
           break;
       }
     },
+    handleExpand(record) {
+      console.log('record', record);
+      if (this.tableExpandData[record.id]) {
+        this.tableExpandData[record.id].isOpen = !this.tableExpandData[record.id].isOpen;
+      }
+    },
   },
 };
 </script>
 
 <style lang="less" scoped>
-  /deep/ .x-table-wrapper {
-    thead {
-      td {
-        .sort-up {
-          color: #447CDD;
-        }
-        .sort-down {
-          color: #447CDD;
-        }
-      }
-    }
-    tbody {
-      tr {
-        &:hover {
-          background-color: #ffedeb;
-          td {
-            background-color: #ffedeb;
-          }
-        }
-      }
-    }
+/deep/ .x-table-wrapper {
+  thead {
     td {
-      text-align: center;
-      height: 35px;
-      line-height: 35px;
-    }
-    .column-sticky{
-      background: #eeeeee;
-    }
-    .page-area {
-      margin-top: 20px;
+      .sort-up {
+        color: #447CDD;
+      }
+      .sort-down {
+        color: #447CDD;
+      }
     }
   }
-  /deep/ .sort_icon {
-    width: 20px;
-    display: inline-block;
-    i {
-      height: 8px;
-      display: block !important;
+  tbody {
+    tr {
+      &:hover {
+        background-color: #ffedeb;
+        td {
+          background-color: #ffedeb;
+        }
+      }
     }
   }
-  /deep/ .search-drop-footer {
-    text-align: right;
-    margin-top: 10px;
-    button {
-      height: 28px;
-      line-height: 25px;
-      min-width: 80px;
-    }
+  td {
+    text-align: center;
+    height: 35px;
+    line-height: 35px;
   }
-  /deep/ .page-area {
+  .column-sticky{
+    background: #eeeeee;
+  }
+  .page-area {
     margin-top: 20px;
   }
+}
+/deep/ .sort_icon {
+  width: 20px;
+  display: inline-block;
+  i {
+    height: 8px;
+    display: block !important;
+  }
+}
+/deep/ .search-drop-footer {
+  text-align: right;
+  margin-top: 10px;
+  button {
+    height: 28px;
+    line-height: 25px;
+    min-width: 80px;
+  }
+}
+/deep/ .page-area {
+  margin-top: 20px;
+}
 </style>

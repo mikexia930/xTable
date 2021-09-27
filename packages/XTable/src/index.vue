@@ -1,8 +1,22 @@
 <template>
-  <div class="x-table-wrapper">
-    <div class="x-table-area">
-      <div v-if="!isUseSingleTable" class="x-table-fix-header" :style="{ width: this.config.scrollWidth, position: isFixHeader && isFixedHeader ? 'fixed' : null }">
-        <div :id="domInit.header" class="x-table-border x-table-content" :style="{ width: this.config.scrollWidth }">
+  <div class="x-table-wrapper" :id="domInit.wrap">
+    <div class="x-table-area" v-if="data.length <= 0">
+      <slot name="nodata">
+        no data
+      </slot>
+    </div>
+    <div class="x-table-area" v-else>
+      <div
+        v-if="!isUseSingleTable"
+        class="x-table-fix-header"
+        :style="stickyStyle"
+      >
+        <div
+          :id="domInit.header"
+          class="x-table-content"
+          :class="headBorder"
+          :style="{ width: styleTable.width, overflow: 'hidden' }"
+        >
           <table class="x-fixed-table">
             <colgroup>
               <col
@@ -12,61 +26,62 @@
               >
             </colgroup>
             <thead class="x-head-dom">
-              <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
-                <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                  <x-td
-                    :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                    from="th"
-                    :is-sticky="isSticky"
-                    :no-wrap="config.noWrap"
-                    :row-index="titleIndex"
-                    :row-item="titleItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
-                    :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
-                    :column-length="tableColumns.length"
-                    :drag-columns="dragColumns"
-                    :resize-columns="resizeColumns"
-                  >
-                    <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                      <slot
-                        :name="`th-${columnItem.dataIndex}`"
-                        :record="record"
-                        :text="text"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-sort-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-search-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-filter-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:th-drag>
-                      <slot :name="`th-drag`"></slot>
-                    </template>
-                    <template v-slot:th-resize>
-                      <slot :name="`th-resize`"></slot>
-                    </template>
-                  </x-td>
-                </template>
-              </tr>
+            <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
+              <template v-for="(columnItem, columnIndex) in tableColumnsHead">
+                <x-td
+                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                  from="th"
+                  :is-sticky="isSticky"
+                  :padding-length="paddingLength"
+                  :no-wrap="config.noWrap"
+                  :row-index="titleIndex"
+                  :row-item="titleItem"
+                  :column-index="columnIndex"
+                  :column-item="columnItem"
+                  :colgroup-data="colgroupData"
+                  :sticky-left-columns="stickyLeftColumns"
+                  :sticky-right-columns="stickyRightColumns"
+                  :column-length="tableColumns.length"
+                  :drag-columns="dragColumns"
+                  :resize-columns="resizeColumns"
+                >
+                  <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
+                    <slot
+                      :name="`th-${columnItem.dataIndex}`"
+                      :record="record"
+                      :text="text"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-sort-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-search-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-filter-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:th-drag>
+                    <slot :name="`th-drag`"></slot>
+                  </template>
+                  <template v-slot:th-resize>
+                    <slot :name="`th-resize`"></slot>
+                  </template>
+                </x-td>
+              </template>
+            </tr>
             </thead>
           </table>
           <div
@@ -79,11 +94,16 @@
             v-if="isSticky && stickyRightColumns.length > 0"
             :id="domInit.rightHeader"
             class="x-sticky-shadow x-sticky-right-shadow"
-            :style="{'right': getStickyDistance((tableColumns.length - 1 - stickyRightColumns.length), (tableColumns.length - 1), 'right', 'shadow')}"
+            :style="{'left': getStickyDistance((tableColumns.length - 1 - stickyRightColumns.length), (tableColumns.length - 1), 'right', 'shadow')}"
           ></div>
         </div>
       </div>
-      <div :id="domInit.content" class="x-table-border x-table-content" :style="styleTable">
+      <div
+        :id="domInit.content"
+        class="x-table-content"
+        :class="contentBorder"
+        :style="styleTable"
+      >
         <div>
           <table class="x-fixed-table">
             <colgroup>
@@ -94,108 +114,81 @@
               >
             </colgroup>
             <thead v-if="isUseSingleTable" class="x-head-dom">
-              <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
-                <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                  <x-td
-                    :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                    from="th"
-                    :is-sticky="isSticky"
-                    :no-wrap="config.noWrap"
-                    :row-index="titleIndex"
-                    :row-item="titleItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
-                    :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
-                    :column-length="tableColumns.length"
-                    :drag-columns="dragColumns"
-                    :resize-columns="resizeColumns"
-                  >
-                    <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                      <slot
-                        :name="`th-${columnItem.dataIndex}`"
-                        :record="record"
-                        :text="text"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-sort-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-search-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                      <slot
-                        :name="`th-filter-${columnItem.dataIndex}`"
-                        :record="record"
-                        :dataIndex="dataIndex"
-                      ></slot>
-                    </template>
-                    <template v-slot:th-drag>
-                      <slot :name="`th-drag`"></slot>
-                    </template>
-                    <template v-slot:th-resize>
-                      <slot :name="`th-resize`"></slot>
-                    </template>
-                  </x-td>
-                </template>
-              </tr>
+            <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
+              <template v-for="(columnItem, columnIndex) in tableColumnsHead">
+                <x-td
+                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                  from="th"
+                  :is-sticky="isSticky"
+                  :padding-length="paddingLength"
+                  :no-wrap="config.noWrap"
+                  :row-index="titleIndex"
+                  :row-item="titleItem"
+                  :column-index="columnIndex"
+                  :column-item="columnItem"
+                  :colgroup-data="colgroupData"
+                  :sticky-left-columns="stickyLeftColumns"
+                  :sticky-right-columns="stickyRightColumns"
+                  :column-length="tableColumns.length"
+                  :drag-columns="dragColumns"
+                  :resize-columns="resizeColumns"
+                >
+                  <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
+                    <slot
+                      :name="`th-${columnItem.dataIndex}`"
+                      :record="record"
+                      :text="text"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-sort-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-search-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                    <slot
+                      :name="`th-filter-${columnItem.dataIndex}`"
+                      :record="record"
+                      :dataIndex="dataIndex"
+                    ></slot>
+                  </template>
+                  <template v-slot:th-drag>
+                    <slot :name="`th-drag`"></slot>
+                  </template>
+                  <template v-slot:th-resize>
+                    <slot :name="`th-resize`"></slot>
+                  </template>
+                </x-td>
+              </template>
+            </tr>
             </thead>
             <tbody>
-              <template v-if="showData.length <= 0">
-                <tr>
-                  <td class="x-no-data" :colspan="columns.length">
-                    <slot name="nodata">
-                      no data
-                    </slot>
-                  </td>
-                </tr>
-              </template>
-              <template v-else>
-                <tr v-for="(rowItem, rowIndex) in showData" :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
-                  <template v-for="(columnItem, columnIndex) in tableColumns">
-                    <x-td
-                      :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
-                      from="td"
-                      :is-sticky="isSticky"
-                      :no-wrap="config.noWrap"
-                      :row-index="rowIndex"
-                      :row-item="rowItem"
-                      :column-index="columnIndex"
-                      :column-item="columnItem"
-                      :colgroup-data="colgroupData"
-                      :sticky-left-columns="stickyLeftColumns"
-                      :sticky-right-columns="stickyRightColumns"
-                      :column-length="tableColumns.length"
-                    >
-                      <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text}">
-                        <slot
-                          :name="`td-${columnItem.dataIndex}`"
-                          :record="record"
-                          :text="text"
-                        ></slot>
-                      </template>
-                    </x-td>
-                  </template>
-                </tr>
-              </template>
-            </tbody>
-            <tfoot v-if="footerData && footerData.length > 0">
-              <tr v-for="(rowItem, rowIndex) in footerShowData" :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
+            <template v-if="showData.length <= 0">
+              <tr>
+                <td class="x-no-data" :colspan="columns.length">
+                  <slot name="noresult">
+                    no result
+                  </slot>
+                </td>
+              </tr>
+            </template>
+            <template v-else>
+              <tr v-for="(rowItem, rowIndex) in showData" :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
                 <template v-for="(columnItem, columnIndex) in tableColumns">
                   <x-td
-                    :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
-                    from="tf"
+                    :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
+                    from="td"
                     :is-sticky="isSticky"
+                    :padding-length="paddingLength"
                     :no-wrap="config.noWrap"
                     :row-index="rowIndex"
                     :row-item="rowItem"
@@ -206,9 +199,9 @@
                     :sticky-right-columns="stickyRightColumns"
                     :column-length="tableColumns.length"
                   >
-                    <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
+                    <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text}">
                       <slot
-                        :name="`tf-${columnItem.dataIndex}`"
+                        :name="`td-${columnItem.dataIndex}`"
                         :record="record"
                         :text="text"
                       ></slot>
@@ -216,6 +209,36 @@
                   </x-td>
                 </template>
               </tr>
+            </template>
+            </tbody>
+            <tfoot v-if="footerData && footerData.length > 0">
+            <tr v-for="(rowItem, rowIndex) in footerShowData" :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
+              <template v-for="(columnItem, columnIndex) in tableColumns">
+                <x-td
+                  :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
+                  from="tf"
+                  :is-sticky="isSticky"
+                  :padding-length="paddingLength"
+                  :no-wrap="config.noWrap"
+                  :row-index="rowIndex"
+                  :row-item="rowItem"
+                  :column-index="columnIndex"
+                  :column-item="columnItem"
+                  :colgroup-data="colgroupData"
+                  :sticky-left-columns="stickyLeftColumns"
+                  :sticky-right-columns="stickyRightColumns"
+                  :column-length="tableColumns.length"
+                >
+                  <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
+                    <slot
+                      :name="`tf-${columnItem.dataIndex}`"
+                      :record="record"
+                      :text="text"
+                    ></slot>
+                  </template>
+                </x-td>
+              </template>
+            </tr>
             </tfoot>
           </table>
         </div>
@@ -230,10 +253,10 @@
         v-if="isSticky && stickyRightColumns.length > 0"
         :id="domInit.right"
         class="x-sticky-shadow x-sticky-right-shadow"
-        :style="{'right': getStickyDistance((tableColumns.length - 1 - stickyRightColumns.length), (tableColumns.length - 1), 'right', 'shadow')}"
+        :style="{'left': getStickyDistance((tableColumns.length - 1 - stickyRightColumns.length), (tableColumns.length - 1), 'right', 'shadow')}"
       ></div>
     </div>
-    <div class="x-page-area">
+    <div class="x-page-area" v-if="showData.length > 0">
       <slot name="page"></slot>
     </div>
   </div>
@@ -241,17 +264,22 @@
 
 <script>
 import Sortable from 'sortablejs';
+import { debounce, cloneDeep } from 'lodash';
+import { getStorage, setStorage, removeStorage } from './storage';
 import XTd from './td.vue';
 
 export default {
   name: 'x-table',
   props: {
+    isUseStorage: Boolean, // 是否启用缓存记录表格变化，位置和宽度
     isUseSingleTable: Boolean, // 是否启用表头固定
     isFixHeader: Boolean, // 是否启用表头固定
     isSticky: Boolean, // 是否启用列固定，打开后columns里设置的sticky才有效果
+    paddingLength: Number, // 表格 td padding 占位宽度，用于计算内部 dom 的宽度
     columns: Array, // 列数据
     title: Array, // 表头数据
     data: Array, // 表数据
+    expandData: Object, // 表扩展列数据
     footerData: Array, // footer数据
     headerData: Array, // header数据，不同于表头，表头为固定，headerData为表头下面继续展示的数据
     config: Object, // 表格的配置
@@ -259,16 +287,15 @@ export default {
     sortData: Object, // 排序列数据 { dataIndex: 列索引, sortType: 排序方式 init/up/down }，同一时间只能对一个列排序
     searchData: Object, // { key1: string1, key2: string2 } key 为 dataIndex, string为查询关键词，多个查询会叠加作用
     filterData: Object, // { key1: array1, key2: array2 } key 为 dataIndex, array为已选中的值数组，多个筛选会叠加作用
+    pivotTable: Array, // 数组不为空，则开启透视表（行合并）， [key1, key2] key 为 dataIndex，需要开启的列。多列开启,规则为 按数组下标顺序，按第一列组，第二列组依次合并，不在上一组的相同值不会合并。
   },
   components: {
     XTd,
   },
   data() {
     return {
-      styleTable: {
-        height: `${this.config.scrollHeight}`,
-        width: `${this.config.scrollWidth}`,
-      },
+      wrapAreaWidth: 0,
+      wrapLeftSpan: 0,
       tableColumns: [...this.columns],
       tableColumnsHead: [...this.columns], // 为了拖动表格后的顺序bug，单独生产一个头部使用的列数据
       stickyLeftColumns: [], // 需要left sticky的列数组，[ dataIndex ]
@@ -291,9 +318,87 @@ export default {
       showData: [], // 分页显示的数据
       isFixedHeader: false,
       domMap: {},
+      domInit: {
+        wrap: `${this.config.key}-x-table-wrapper`, // 外层包围dom
+        header: `${this.config.key}-x-table-header`, // 表头包围dom
+        content: `${this.config.key}-x-table-content`, // 表格包围dom
+        left: `${this.config.key}-x-sticky-left-shadow`, // left sticky的阴影条
+        right: `${this.config.key}-x-sticky-right-shadow`, // right sticky的阴影条
+        leftHeader: `${this.config.key}-x-sticky-left-header-shadow`, // 表头 left sticky的阴影条
+        rightHeader: `${this.config.key}-x-sticky-right-header-shadow`, // 表头 right sticky的阴影条
+      },
     };
   },
   computed: {
+    /**
+     * 百分比转具体值，保证浮动表头和内容的列宽一致
+     */
+    styleTable() {
+      const backData = {
+        height: `${this.config.scrollHeight}`,
+        width: `${this.config.scrollWidth}`,
+      };
+      const widthStr = String(this.config.scrollWidth);
+      if (widthStr.substring(widthStr.length - 1) === '%') {
+        const width = Math.ceil(this.wrapAreaWidth * (parseInt(backData.width, 10) / 100));
+        backData.width = `${width}px`;
+      }
+      return backData;
+    },
+    /**
+     * 配置头部 border
+     */
+    headBorder() {
+      let backData = '';
+      switch (String(this.config.border)) {
+        case '0':
+          break;
+        case '1':
+          backData = 'x-table-border-no-bottom x-td-border';
+          break;
+        case '2':
+          backData = 'x-td-border';
+          break;
+        default:
+          break;
+      }
+      return backData;
+    },
+    /**
+     * 配置内容区域 border
+     */
+    contentBorder() {
+      let backData = '';
+      switch (String(this.config.border)) {
+        case '0':
+          break;
+        case '1':
+          if (this.isUseSingleTable) {
+            backData = 'x-table-border x-td-border';
+          } else {
+            backData = 'x-table-border-no-top x-td-border';
+          }
+          break;
+        case '2':
+          backData = 'x-td-border';
+          break;
+        default:
+          break;
+      }
+      return backData;
+    },
+    /**
+     * 设置 header sticky 的样式，主要是是否启用 sticky 属性，和sticky 的距离
+     */
+    stickyStyle() {
+      const isFixHeader = this.isFixHeader && this.isFixedHeader;
+      const backData = {
+        width: this.styleTable.width,
+        position: isFixHeader ? 'fixed' : null,
+        left: isFixHeader ? `${this.wrapLeftSpan}px` : null,
+      };
+      return backData;
+    },
     /**
      * 当前最大的页码
      */
@@ -307,19 +412,6 @@ export default {
       return this.dataUse.length;
     },
     /**
-     * dom的初始化，config.key 避免同一页使用多个table，getElementById重名
-     */
-    domInit() {
-      return {
-        header: `${this.config.key}-x-table-header`, // 表格包围dom
-        content: `${this.config.key}-x-table-content`, // 表格包围dom
-        left: `${this.config.key}-x-sticky-left-shadow`, // left sticky的阴影条
-        right: `${this.config.key}-x-sticky-right-shadow`, // right sticky的阴影条
-        leftHeader: `${this.config.key}-x-sticky-left-header-shadow`, // 表头 left sticky的阴影条
-        rightHeader: `${this.config.key}-x-sticky-right-header-shadow`, // 表头 right sticky的阴影条
-      };
-    },
-    /**
      * 表格footer数据，主要为了rowSpan的计算
      */
     footerShowData() {
@@ -327,6 +419,26 @@ export default {
     },
   },
   watch: {
+    columns: {
+      handler() {
+        this.resetColumnsByStorage();
+        this.initColumnWidth();
+        this.initData();
+      },
+      deep: true,
+    },
+    data: {
+      handler(newVal) {
+        this.dataUse = [...newVal];
+        this.getShowData();
+        if (newVal.length > 0) {
+          this.$nextTick(() => {
+            this.initDom();
+          });
+        }
+      },
+      deep: true,
+    },
     /**
      * 监听换页和切换每页显示条数
      */
@@ -361,50 +473,102 @@ export default {
     /**
      * 监听筛选
      */
-    filterData(newVal) {
-      this.doFilter(newVal);
+    filterData: {
+      handler(newVal) {
+        if (this.data && this.data.length > 0) {
+          this.doFilter(newVal);
+        }
+      },
+      deep: true,
+    },
+    /**
+     * 监听表格扩展
+     */
+    expandData: {
+      handler() {
+        this.getShowData();
+      },
+      deep: true,
     },
   },
   created() {
-    this.initData();
+    window.onresize = debounce(() => {
+      this.initWrap();
+      this.initColumnWidth();
+    }, 500);
+    if (this.tableColumns.length > 0) {
+      this.initColumnWidth();
+      this.initData();
+      this.getShowData();
+    }
   },
   mounted() {
-    // 初始化dom
-    this.domMap = this.getDomMap('static');
-    // dom绑定动作
-    this.initDomAction();
-    // 如果开启表头固定
-    if (!this.isUseSingleTable && this.isFixHeader) {
-      this.showFixHeader(this.domMap.content.getBoundingClientRect().top);
-      window.addEventListener('scroll', () => {
-        this.showFixHeader(this.domMap.content.getBoundingClientRect().top, this.domMap.content.getBoundingClientRect().bottom);
-      });
+    this.initWrap();
+    if (this.tableColumns.length > 0) {
+      this.initDom();
     }
-    // 初始 stick 左右阴影是否显示
-    if (this.domMap.left || this.domMap.right) {
-      this.showLineShadow();
-    }
-    // 如果需要监听监听内容横向滚动条
-    if (this.domMap.left || this.domMap.right || this.isFixHeader) {
-      this.domMap.content.addEventListener('scroll', (e) => {
-        const { target } = e;
-        if (!this.isUseSingleTable) {
-          this.scrollPosition('header', target.scrollLeft);
+  },
+  beforeDestroy() {
+    // TODO
+  },
+  methods: {
+    /**
+     * 初始化表格区域位置
+     */
+    initWrap() {
+      const wrapDom = this.getDomMap('dynamic', 'wrap');
+      if (wrapDom) {
+        this.wrapLeftSpan = wrapDom.getBoundingClientRect().left;
+        this.wrapAreaWidth = wrapDom.clientWidth;
+      }
+    },
+    /**
+     * 初始 dom 相关
+     */
+    initDom() {
+      // 初始化dom
+      this.domMap = this.getDomMap('static');
+      // dom绑定动作
+      this.initDomAction();
+      if (this.domMap.content) {
+        // 如果开启表头固定
+        if (!this.isUseSingleTable && this.isFixHeader) {
+          this.showFixHeader(this.domMap.content.getBoundingClientRect().top);
+          window.addEventListener('scroll', () => {
+            this.showFixHeader(this.domMap.content.getBoundingClientRect().top, this.domMap.content.getBoundingClientRect().bottom);
+          });
         }
-        // 监听 stick 左右阴影是否显示
+        // 初始 stick 左右阴影是否显示
         if (this.domMap.left || this.domMap.right) {
           this.showLineShadow();
         }
-      });
-    }
-  },
-  methods: {
+        // 如果需要监听监听内容横向滚动条
+        if ((this.domMap.left || this.domMap.right || this.isFixHeader) && this.domMap.content) {
+          this.domMap.content.addEventListener('scroll', (e) => {
+            const { target } = e;
+            if (!this.isUseSingleTable) {
+              this.scrollPosition('header', target.scrollLeft);
+            }
+            // 监听 stick 左右阴影是否显示
+            if (this.domMap.left || this.domMap.right) {
+              this.showLineShadow();
+            }
+          });
+        }
+      }
+    },
     /**
      * 数据初始化
      */
     initData() {
       const { miniWidth } = this.config;
-      this.columns.forEach((column) => {
+      this.colgroupData = [];
+      this.dragGroup = [];
+      this.dragColumns = [];
+      this.resizeColumns = [];
+      this.stickyLeftColumns = [];
+      this.stickyRightColumns = [];
+      this.tableColumns.forEach((column) => {
         // 汇总可以drag的列
         if (column.dragGroup) {
           if (!this.dragGroup.includes(column.dragGroup)) {
@@ -427,25 +591,149 @@ export default {
           }
         }
       });
-      this.getShowData();
     },
     /**
      * 表头切换的时候重新绑定事件
      */
     initDomAction() {
+      this.initResizeAction();
+      this.initDragAction();
+    },
+    initResizeAction() {
       // 如果存在拖动改变列宽的列，则设置 mousedown 监听
-      if (this.resizeColumns && this.resizeColumns.length > 0) {
-        this.resizeThrottle = this.getResize;// throttle(this.getResize, 1); 使用的lodash的throttle，打开需安装lodash
-        const resizeDom = document.querySelectorAll('.x-resize-dom-handle');
-        resizeDom.forEach((dom) => {
-          // dom.addEventListener('mousedown', this.doResize, false);
-          const domCopy = dom;
-          domCopy.onpointerdown = this.doResize;
-        });
-      }
+      this.$nextTick(() => {
+        if (this.resizeColumns && this.resizeColumns.length > 0) {
+          this.resizeThrottle = this.getResize;// throttle(this.getResize, 1); 使用的lodash的throttle，打开需安装lodash
+          const resizeDom = document.querySelectorAll('.x-resize-dom-handle');
+          resizeDom.forEach((dom) => {
+            const domCopy = dom;
+            domCopy.removeEventListener('pointerdown', this.doResize);
+            domCopy.onpointerdown = this.doResize;
+            // dom.addEventListener('mousedown', this.doResize, false);
+          });
+        }
+      });
+    },
+    initDragAction() {
       // 如果存在列拖动交换的列
-      if (this.dragGroup && this.dragGroup.length > 0) {
-        this.doDrag();
+      this.$nextTick(() => {
+        if (this.dragGroup && this.dragGroup.length > 0) {
+          this.doDrag();
+        }
+      });
+    },
+    /**
+     * 根据 storage 的缓存顺序和宽度，重置
+     */
+    resetColumnsByStorage() {
+      const { key } = this.config;
+      const storageData = getStorage(key);
+      let curColumns = this.columns;
+      if (!this.isUseStorage) {
+        // 删除
+        if (storageData) {
+          removeStorage(key);
+        }
+      } else {
+        // 获取
+        const newColumns = [];
+        const hadColumns = [];
+        if (storageData && Array.isArray(storageData)) {
+          storageData.forEach((item) => {
+            const columnData = this.getColumnDataByDataIndex(item.dataIndex);
+            if (columnData) {
+              newColumns.push({
+                ...columnData,
+                width: item.width,
+              });
+              hadColumns.push(item.dataIndex);
+            }
+          });
+          // 验证现有 column 数据
+          let isHasNoStorageColumn = false;
+          this.columns.forEach((item) => {
+            if (!hadColumns.includes(item.dataIndex)) {
+              isHasNoStorageColumn = true;
+            }
+          });
+          // 如果 缓存的 columns 和 当前的不一样，则取当前的
+          if (!isHasNoStorageColumn) {
+            curColumns = newColumns;
+          }
+        }
+      }
+      this.tableColumns = cloneDeep(curColumns);
+      this.tableColumnsHead = cloneDeep(curColumns);
+    },
+    /**
+     * 通过 dataIndex 获取 column 的值
+     */
+    getColumnDataByDataIndex(dataIndex) {
+      let backData;
+      this.columns.forEach((item) => {
+        if (item.dataIndex === dataIndex) {
+          backData = item;
+          return false;
+        }
+        return true;
+      });
+      return backData;
+    },
+    /**
+     * 重置列宽，如果列宽小于表格区域宽度，则最后一列自适应，如果最后一列也设置了宽度，强制取消
+     */
+    initColumnWidth() {
+      const { miniWidth } = this.config;
+      let totalColumnWidth = 0;
+      let withOutLastColumnWidth = 0;
+      let settleColumnWidth = 0;
+      const totalLength = this.tableColumns.length;
+      const lockedColumns = []; // index
+      const settleWidthColumns = []; // 已设置的宽度的列
+      const emptyWidthColumns = []; // 未设置的宽度的列
+      this.tableColumns.forEach((column, index) => {
+        if (column.widthLock && column.width) {
+          lockedColumns.push(index);
+        } else if (column.width) {
+          settleWidthColumns.push(index);
+        } else {
+          emptyWidthColumns.push(index);
+        }
+      });
+      // 先给表格使用默认设置最小设置，如果小于最小设置的话，
+      this.tableColumns.forEach((column, index) => {
+        let curColumnWidth = 0;
+        if (column.width) {
+          curColumnWidth = parseFloat(column.width);
+          settleColumnWidth += curColumnWidth;
+        } else if (miniWidth) {
+          curColumnWidth = parseFloat(miniWidth);
+        }
+        totalColumnWidth += curColumnWidth;
+        if (index < (totalLength - 1)) {
+          withOutLastColumnWidth += curColumnWidth;
+        }
+      });
+      if (totalColumnWidth < this.wrapAreaWidth) {
+        const lastWithoutSettleWidth = this.wrapAreaWidth - settleColumnWidth;
+        const emptyColumnLength = emptyWidthColumns.length;
+        const settleColumnLength = settleWidthColumns.length;
+        if (emptyColumnLength > 0) {
+          // 如果有未设置宽度的
+          const modWidth = lastWithoutSettleWidth % emptyColumnLength;
+          const everyWidth = (lastWithoutSettleWidth - modWidth) / emptyColumnLength;
+          emptyWidthColumns.forEach((itemIndex, index) => {
+            let curItemWidth = 0;
+            if (index === (emptyColumnLength - 1)) {
+              curItemWidth = everyWidth + modWidth;
+            } else {
+              curItemWidth = everyWidth;
+            }
+            this.tableColumns[itemIndex].width = `${curItemWidth}px`;
+          });
+        } else if (settleColumnLength > 0) {
+          this.tableColumns[settleWidthColumns[settleColumnLength - 1]].width = `${this.wrapAreaWidth - withOutLastColumnWidth}px`;
+        }
       }
     },
     /**
@@ -468,7 +756,7 @@ export default {
       return backData;
     },
     /**
-     * 显示 sticky 左右的列阴影
+     * 显示/隐藏 sticky 左右的列阴影
      */
     showLineShadow() {
       const leftDistance = this.domMap.content.scrollLeft;
@@ -476,13 +764,13 @@ export default {
       const leftHeaderShadowDom = this.getDomMap('dynamic', 'leftHeader');
       const rightHeaderShadowDom = this.getDomMap('dynamic', 'rightHeader');
       if (this.domMap.left) {
-        this.domMap.left.style.display = leftDistance ? 'block' : 'none';
+        this.domMap.left.style.display = (leftDistance && this.showData.length) ? 'block' : 'none';
         if (leftHeaderShadowDom) {
           leftHeaderShadowDom.style.display = leftDistance ? 'block' : 'none';
         }
       }
       if (this.domMap.right) {
-        this.domMap.right.style.display = rightDistance ? 'none' : 'block';
+        this.domMap.right.style.display = (rightDistance || !this.showData.length) ? 'none' : 'block';
         if (rightHeaderShadowDom) {
           rightHeaderShadowDom.style.display = rightDistance ? 'none' : 'block';
         }
@@ -510,7 +798,7 @@ export default {
      * @param bottom 底部离可视窗口的距离
      */
     showFixHeader(top, bottom) {
-      if (top <= 35) {
+      if (top <= 48) {
         this.isFixedHeader = true;
       } else {
         this.isFixedHeader = false;
@@ -545,7 +833,44 @@ export default {
     getShowData() {
       const begin = (this.pageData.page - 1) * this.pageData.size;
       const end = begin + this.pageData.size;
-      this.showData = this.getRowSpan(this.dataUse.slice(begin, end));
+      // this.showData = this.getRowSpan(this.dataUse.slice(begin, end));
+      let useData = [];
+      if (this.pivotTable && this.pivotTable.length > 0) {
+        useData = this.getPivotTableData(this.dataUse.slice(begin, end));
+      } else {
+        useData = this.getRowSpan(this.dataUse.slice(begin, end));
+      }
+      this.getShowDataWithExpand(useData);
+    },
+    /**
+     * 打开行
+     */
+    getShowDataWithExpand(useData) {
+      const { expandData } = this;
+      const newShowData = [];
+      useData.forEach((item) => {
+        newShowData.push(item);
+        const expandKey = item[this.config.rowKey];
+        if (expandData && expandData[expandKey] && expandData[expandKey].isOpen) {
+          let curExpandData = [];
+          switch (expandData[expandKey].type) {
+            case 'span':
+              curExpandData = expandData[expandKey].data;
+              break;
+            case 'data':
+              curExpandData = expandData[expandKey].data;
+              break;
+            default:
+              break;
+          }
+          if (curExpandData.length > 0) {
+            curExpandData.forEach((curData) => {
+              newShowData.push(curData);
+            });
+          }
+        }
+      });
+      this.showData = newShowData;
     },
     /**
      * 获取sticky的方向 left/right
@@ -573,20 +898,23 @@ export default {
      */
     getStickyDistance(index, total, direction, from = 'sticky') {
       let distance = 0;
-      if (direction === 'left') {
-        for (let i = 0; i < index; i += 1) {
-          distance += parseInt(this.colgroupData[i].width, 10);
-        }
-      } else if (direction === 'right') {
-        for (let i = total; i > index; i -= 1) {
-          distance += parseInt(this.colgroupData[i].width, 10);
-        }
-      }
-      if (from === 'shadow') {
+      if (total > 0) {
         if (direction === 'left') {
-          distance += 2;
+          for (let i = 0; i < index; i += 1) {
+            distance += parseInt(this.colgroupData[i].width, 10);
+          }
         } else if (direction === 'right') {
-          distance += 3;
+          for (let i = total; i > index; i -= 1) {
+            distance += parseInt(this.colgroupData[i].width, 10);
+          }
+        }
+        if (from === 'shadow') {
+          if (direction === 'left') {
+            distance -= 1;
+          } else if (direction === 'right') {
+            distance = this.wrapAreaWidth - distance;
+            distance -= 1;
+          }
         }
       }
       return `${distance}px`;
@@ -611,18 +939,18 @@ export default {
      * @param e 拖动的event
      */
     doResize(e) {
-      const domIndex = e.target.parentNode.parentNode.cellIndex;
+      const domIndex = e.target.parentNode.cellIndex;
       this.initResize = {
         index: domIndex,
-        width: parseInt(e.target.parentElement.parentElement.offsetWidth, 10),
+        width: parseInt(e.target.parentElement.offsetWidth, 10),
         x: e.clientX,
         y: e.clientY,
       };
-      // document.documentElement.addEventListener('mousemove', this.resizeThrottle, false);
-      // document.documentElement.addEventListener('mouseup', this.stopResize, false);
       e.target.onpointermove = this.resizeThrottle;
       e.target.setPointerCapture(e.pointerId);
       e.target.onpointerup = this.stopResize;
+      // document.documentElement.addEventListener('mousemove', this.resizeThrottle, false);
+      // document.documentElement.addEventListener('mouseup', this.stopResize, false);
     },
     /**
      * 开始拖动列宽，区间为 config里的最大、最小值
@@ -635,6 +963,7 @@ export default {
       } else if (width < this.config.resizeMin) {
         width = this.config.resizeMin;
       }
+      width = Math.round(width);
       this.setResize(`${width}px`);
     },
     /**
@@ -644,6 +973,7 @@ export default {
       this.colgroupData.splice(this.initResize.index, 1, {
         width,
       });
+      this.setColumnsStorage();
     },
     /**
      * 结束拖动更改列宽，去除监听事件
@@ -680,8 +1010,16 @@ export default {
             if (newIndex !== oldIndex) {
               const newItem = that.tableColumns[newIndex];
               const oldItem = that.tableColumns[oldIndex];
+              const newGroupItem = that.colgroupData[newIndex];
+              const oldGroupItem = that.colgroupData[oldIndex];
               that.tableColumns.splice(newIndex, 1, oldItem);
               that.tableColumns.splice(oldIndex, 1, newItem);
+              that.tableColumnsHead.splice(newIndex, 1, oldItem);
+              that.tableColumnsHead.splice(oldIndex, 1, newItem);
+              that.colgroupData.splice(newIndex, 1, oldGroupItem);
+              that.colgroupData.splice(oldIndex, 1, newGroupItem);
+              that.setColumnsStorage();
+              that.initResizeAction();
             }
           },
         });
@@ -789,6 +1127,7 @@ export default {
       this.dataUse = this.getFilterData(this.data, filterData);
       this.doReInitData('filter');
       this.resetPage('filter');
+      this.showLineShadow();
     },
     /**
      * 表头筛选数据计算
@@ -801,7 +1140,11 @@ export default {
         let backData = true;
         Object.keys(filterData).forEach((key) => {
           if (filterData[key] && filterData[key].length > 0) {
-            if (filterData[key].includes(itemData[key].value)) {
+            let curValue = '';
+            if (itemData[key]) {
+              curValue = itemData[key].value || itemData[key];
+            }
+            if (filterData[key].includes(curValue)) {
               return false;
             }
             backData = false;
@@ -841,16 +1184,24 @@ export default {
       if (sortType && sortType !== 'init') {
         this.dataUse.sort((prev, next) => {
           let back = 0;
+          let prevValue = '';
+          let nextValue = '';
+          if (prev[dataIndex]) {
+            prevValue = prev[dataIndex].value || prev[dataIndex];
+          }
+          if (next[dataIndex]) {
+            nextValue = next[dataIndex].value || next[dataIndex];
+          }
           if (sortType === 'up') {
-            if (prev[dataIndex].value < next[dataIndex].value) {
+            if (prevValue < nextValue) {
               back = -1;
-            } else if (prev[dataIndex].value > next[dataIndex].value) {
+            } else if (prevValue > nextValue) {
               back = 1;
             }
           } else if (sortType === 'down') {
-            if (prev[dataIndex].value > next[dataIndex].value) {
+            if (prevValue > nextValue) {
               back = -1;
-            } else if (prev[dataIndex].value < next[dataIndex].value) {
+            } else if (prevValue < nextValue) {
               back = 1;
             }
           }
@@ -898,6 +1249,75 @@ export default {
       });
     },
     /**
+     * 如果开启透视表 pivotTable，重组数组的 rowSpan
+     * @param data 当前分页的数据
+     * @return {object}
+     */
+    getPivotTableData(data) {
+      let backData = data;
+      const pivotTableLength = this.pivotTable.length;
+      for (let i = 0; i < pivotTableLength; i += 1) {
+        backData = this.computePivotTableData(this.pivotTable[i - 1], this.pivotTable[i], backData);
+      }
+      return backData;
+    },
+    /**
+     * 计算分组的 rowSpan
+     * @param dataIndex 当前透视的列
+     * @param data 当前分组的数据
+     * @return {object}
+     */
+    computePivotTableData(preDataIndex, dataIndex, data) {
+      const dataLength = data.length - 1;
+      const backData = [];
+      if (dataLength > 1) {
+        let groupIndex = 0;
+        let spanRowNumber = 1;
+        for (let i = dataLength; i >= 1; i -= 1) {
+          backData[i] = { ...data[i] };
+          const valueIsObject = typeof data[i][dataIndex] === 'object';
+          const preValueIsObject = typeof data[i - 1][dataIndex] === 'object';
+          const value = valueIsObject ? data[i][dataIndex].value : data[i][dataIndex];
+          const preValue = preValueIsObject ? data[i - 1][dataIndex].value : data[i - 1][dataIndex];
+          let isSameGroup = true;
+          if (preDataIndex) {
+            if (data[i][preDataIndex].groupIndex !== data[i - 1][preDataIndex].groupIndex) {
+              isSameGroup = false;
+            }
+          }
+          if (isSameGroup && value === preValue) {
+            spanRowNumber += 1;
+            backData[i][dataIndex] = {
+              rowSpan: 0,
+              colSpan: valueIsObject ? data[i][dataIndex].colSpan : 1,
+              value,
+              groupIndex,
+            };
+          } else {
+            backData[i][dataIndex] = {
+              rowSpan: spanRowNumber,
+              colSpan: valueIsObject ? data[i][dataIndex].colSpan : 1,
+              value,
+              groupIndex,
+            };
+            spanRowNumber = 1;
+            groupIndex += 1;
+          }
+          // 补全最后一个
+          if (i === 1) {
+            backData[i - 1] = { ...data[i - 1] };
+            backData[i - 1][dataIndex] = {
+              rowSpan: spanRowNumber,
+              colSpan: preValueIsObject ? data[i - 1][dataIndex].colSpan : 1,
+              value: preValue,
+              groupIndex,
+            };
+          }
+        }
+      }
+      return backData;
+    },
+    /**
      * 获取行合并，主要考虑分页
      * @param data 当前分页的数据
      * @return {object}
@@ -906,42 +1326,77 @@ export default {
       const dataCopy = data;
       if (dataCopy && dataCopy.length > 0) {
         const length = dataCopy.length - 1;
-        let colSpan = 1;
-        for (let i = length; i >= 0; i -= 1) {
-          if (dataCopy[i].rowSpan === 0) {
-            colSpan += 1;
-          } else if (colSpan > 1) {
-            dataCopy[i].colSpan = colSpan;
-            colSpan = 1;
-          } else {
-            dataCopy[i].colSpan = 1;
+        const rowSpanObj = {};
+        const firstRowEmptySpanKeys = [];
+        Object.keys(dataCopy[0]).forEach((dataIndex) => {
+          rowSpanObj[dataIndex] = 1;
+          if (dataCopy[0][dataIndex].rowSpan === 0) {
+            firstRowEmptySpanKeys.push(dataIndex);
           }
+        });
+        for (let i = length; i >= 0; i -= 1) {
+          Object.keys(dataCopy[i]).forEach((dataIndex) => {
+            const curRowSpan = dataCopy[i][dataIndex].rowSpan;
+            if (curRowSpan === 0) {
+              rowSpanObj[dataIndex] += 1;
+            } else if (curRowSpan > 1) {
+              dataCopy[i][dataIndex].rowSpan = rowSpanObj[dataIndex];
+              rowSpanObj[dataIndex] = 1;
+            } else if (curRowSpan) {
+              dataCopy[i][dataIndex].rowSpan = 1;
+            }
+          });
         }
-        if (dataCopy[0].colSpan === 0) {
-          dataCopy[0].colSpan = colSpan;
-          colSpan = 1;
-          if (this.pageData.page > 1) {
-            dataCopy[0].value = this.getLastRowSpanValue();
+        if (firstRowEmptySpanKeys.length > 0) {
+          for (let i = 0; i < firstRowEmptySpanKeys.length; i += 1) {
+            const dataIndex = firstRowEmptySpanKeys[i];
+            dataCopy[0][dataIndex].rowSpan = rowSpanObj[dataIndex];
+            rowSpanObj[dataIndex] = 1;
+            if (this.pageData.page > 1) {
+              dataCopy[0][dataIndex].value = this.getLastRowSpanValue(dataIndex);
+            }
           }
         }
       }
       return dataCopy;
     },
     /**
-     * 避免 page 截断 colSpan，然后当前 page 获取不到列的值
+     * 避免 page 截断 rowSpan，然后当前 page 获取不到列的值
+     * @param dataIndex
      * @return {string}
      */
-    getLastRowSpanValue() {
+    getLastRowSpanValue(dataIndex) {
       let backValue = '';
-      const begin = (this.pageData.page - 1) * this.pageData.size;
+      const begin = (this.pageData.page - 1) * this.pageData.size - 1;
       for (let i = begin; i >= 0; i -= 1) {
-        if (this.dataUse[i].colSpan > 0) {
-          backValue = this.dataUse[i].value;
+        if (this.dataUse[i][dataIndex].rowSpan > 0) {
+          backValue = this.dataUse[i][dataIndex].value;
           break;
         }
       }
       return backValue;
     },
+    /**
+     * 客户端缓存用户更换的顺序和表格宽度
+     */
+    setColumnsStorage() {
+      if (this.isUseStorage) {
+        const curStorageColumns = [];
+        this.tableColumns.forEach((column, index) => {
+          curStorageColumns.push({
+            dataIndex: column.dataIndex,
+            width: this.colgroupData[index]?.width || column.width,
+          });
+        });
+        const { key } = this.config;
+        setStorage(key, curStorageColumns);
+      }
+    },
+    /**
+     * emit数据
+     * @param type
+     * @param data
+     */
     emitTo(type, data) {
       this.$emit('handleTable', {
         type,
@@ -954,39 +1409,37 @@ export default {
 
 <style lang="less" scoped>
 @bgColor: #cccccc;
-@lineColor: #cccccc;
-@headerBgColor: #eeeeee;
+@lineColor: #e8e8e8;
+@headerBgColor: #fafafa;
 .x-table-wrapper {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
   .x-table-area {
     position: relative;
     -webkit-overflow-scrolling: touch;
     .x-sticky-shadow{
-      height: 100%;
+      height: calc(100% - 48px);
       position: absolute;
       box-sizing: border-box;
       width: 1px;
       z-index: 1000;
-      top: 0;
-      background-color: #f0f0f0;
+      top: 48px;
+      background-color: @lineColor;
     }
     .x-sticky-left-shadow{
       display: none;
-      box-shadow: 5px 0px 5px #000000;
+      box-shadow: 2px 0 5px rgba(173, 179, 190, 0.44);
     }
     .x-sticky-right-shadow{
       display: none;
-      box-shadow: -5px 0px 5px #000000;
+      box-shadow: -2px 0 5px rgba(173, 179, 190, 0.44);
     }
     .x-table-fix-header{
       top: 0;
       left: 0;
       z-index: 10000;
+      .x-sticky-shadow{
+        height: 48px;
+        top: 0;
+      }
       .x-table-content {
         -ms-overflow-style: none; /* IE 10+ */
         scrollbar-width: none; /* Firefox */
@@ -997,6 +1450,16 @@ export default {
     }
     .x-table-border {
       border: 1px solid @lineColor;
+    }
+    .x-table-border-no-top {
+      border-left: 1px solid @lineColor;
+      border-right: 1px solid @lineColor;
+      border-bottom: 1px solid @lineColor;
+    }
+    .x-table-border-no-bottom {
+      border-left: 1px solid @lineColor;
+      border-right: 1px solid @lineColor;
+      border-top: 1px solid @lineColor;
     }
     /deep/ .x-resize-dom-handle {
       position: absolute;
@@ -1013,10 +1476,40 @@ export default {
       left: 3px;
       display: none;
       cursor: move;
+      top: 1px;
     }
     .x-fixed-table {
       border-collapse: collapse;
       table-layout: fixed;
+    }
+    /deep/ .x-td-border {
+      td{
+        &:after{
+          content: '';
+          display: block;
+          width: 1px;
+          height: 100%;
+          background-color: @lineColor;
+          position: absolute;
+          right: 0;
+          top: 0;
+        }
+        &:before {
+          content: '';
+          display: block;
+          width: 100%;
+          height: 1px;
+          background-color: @lineColor;
+          position: absolute;
+          left: 0;
+          bottom: 0;
+        }
+        &:last-child{
+          &:after{
+            width: 0;
+          }
+        }
+      }
     }
     /deep/ .x-head-dom {
       td {
@@ -1025,7 +1518,7 @@ export default {
         z-index: 3;
         background-color: @headerBgColor;
         &:hover{
-         .x-resize-dom-handle, .x-drag-dom-handle {
+          .x-resize-dom-handle, .x-drag-dom-handle {
             display: inline-block;
           }
         }
@@ -1042,36 +1535,14 @@ export default {
       &.x-fixed-column {
         position: sticky;
       }
-      &:after{
-        content: '';
-        display: block;
-        width: 1px;
-        height: 100%;
-        background-color: @lineColor;
-        position: absolute;
-        right: 0;
-        top: 0;
-      }
-      &:before {
-        content: '';
-        display: block;
-        width: 100%;
-        height: 1px;
-        background-color: @lineColor;
-        position: absolute;
-        left: 0;
-        bottom: 0;
-      }
-      &:last-child{
-        &:after{
-          width: 0;
-        }
-      }
     }
     .x-table-content {
       width: 100%;
       overflow: auto;
       -webkit-overflow-scrolling: touch;
+      &::-webkit-scrollbar {
+        height: 8px;
+      }
       .x-no-data{
         height: 200px;
         text-align: center;
@@ -1094,5 +1565,4 @@ export default {
     justify-content: flex-end;
   }
 }
-
 </style>
