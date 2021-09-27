@@ -1,6 +1,6 @@
 // 导入组件
 import XTableInstall from './XTable';
-import XTable from './XTable/src';
+import XTable from './XTable/src/index.vue';
 
 // 组件列表
 const components = [

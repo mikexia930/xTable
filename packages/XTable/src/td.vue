@@ -1,13 +1,13 @@
 <template>
   <td
-    v-if="rowItem[columnItem.dataIndex].colSpan && rowItem[columnItem.dataIndex].rowSpan"
+    v-if="getColSpan && getRowSpan"
     :key="`${from}-${rowIndex}-${columnIndex}`"
-    :colspan="rowItem[columnItem.dataIndex].colSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
-    :rowspan="rowItem[columnItem.dataIndex].rowSpan > 1 ? rowItem[columnItem.dataIndex].colSpan : null"
+    :colspan="getColSpan > 1 ? getColSpan : null"
+    :rowspan="getRowSpan > 1 ? getRowSpan : null"
     :class="{
       'x-fixed-column': getStickyDirection(columnItem.dataIndex),
-      'x-left': columnItem.align === 'left',
-      'x-right': columnItem.align === 'right',
+      'x-left': isAlign('left'),
+      'x-right': isAlign('right'),
       'x-drag-dom': from === 'th' && rowIndex === 0 && dragColumns.includes(columnItem.dataIndex),
     }"
     :style="getStickyDirection(columnItem.dataIndex) ? {
@@ -15,19 +15,19 @@
       width: `${ colgroupData[columnIndex].width }`,
       zIndex: from === 'th' ? 2 + (100-columnIndex) : 1 + (100-columnIndex)
     } : {}"
-    :group="from === 'th' && rowIndex === 0 ? (columnItem.dragGroup || '') : 'null'"
+    :group="from === 'th' && rowIndex === 0 ? (columnItem.dragGroup || '') : null"
   >
     <div
-      :title="noWrap ? rowItem[columnItem.dataIndex].value : null"
+      :title="noWrap ? getTdValue : null"
       :class="noWrap ? 'x-td-nowrap' : 'x-td'"
-      :style="{ width: getTdWidth(columnIndex, rowItem[columnItem.dataIndex].colSpan) }"
+      :style="{ width: getTdWidth(columnIndex, getColSpan) }"
     >
       <slot
         :name="`${from}-${columnItem.dataIndex}`"
-        :record="rowItem"
-        :text="rowItem[columnItem.dataIndex].value"
+        :record="getCleanRowItem"
+        :text="getTdValue"
       >
-        <span>{{ rowItem[columnItem.dataIndex].value }}</span>
+        <span>{{ getTdValue }}</span>
       </slot>
 
       <span
@@ -42,7 +42,7 @@
       </span>
 
       <span
-        v-if="from === 'th' && rowIndex === 0 && columnItem.serach"
+        v-if="from === 'th' && rowIndex === 0 && columnItem.search"
         class="x-search"
       >
         <slot
@@ -62,29 +62,67 @@
           :dataIndex="columnItem.dataIndex"
         ></slot>
       </span>
-
-      <span
-        v-if="from === 'th' && rowIndex === 0 && dragColumns.includes(columnItem.dataIndex)"
-        class="x-drag-dom-handle"
-      >
-        <slot :name="`${from}-drag`"></slot>
-      </span>
-
-      <span
-        v-if="from === 'th' && rowIndex === 0 && resizeColumns.includes(columnItem.dataIndex)"
-        class="x-resize-dom-handle"
-      >
-        <slot :name="`${from}-resize`"></slot>
-      </span>
     </div>
+    <span
+      v-if="from === 'th' && rowIndex === 0 && dragColumns.includes(columnItem.dataIndex)"
+      class="x-drag-dom-handle"
+    >
+      <slot :name="`${from}-drag`"></slot>
+    </span>
+
+    <span
+      v-if="from === 'th' && rowIndex === 0 && resizeColumns.includes(columnItem.dataIndex)"
+      class="x-resize-dom-handle"
+    >
+      <slot :name="`${from}-resize`"></slot>
+    </span>
   </td>
 </template>
 
 <script>
 export default {
+  computed: {
+    getColSpan() {
+      let backData = 1;
+      if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
+        backData = this.rowItem[this.columnItem.dataIndex].colSpan;
+      }
+      return backData;
+    },
+    getRowSpan() {
+      let backData = 1;
+      if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
+        backData = this.rowItem[this.columnItem.dataIndex].rowSpan;
+      }
+      return backData;
+    },
+    getTdValue() {
+      let backData = '';
+      if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
+        backData = this.rowItem[this.columnItem.dataIndex].value;
+      } else {
+        backData = this.rowItem[this.columnItem.dataIndex];
+      }
+      return backData;
+    },
+    getCleanRowItem() {
+      const backData = {};
+      Object.keys(this.rowItem).forEach((dataIndex) => {
+        let rowValue;
+        if (typeof this.rowItem[dataIndex] === 'object') {
+          rowValue = this.rowItem[dataIndex].value;
+        } else {
+          rowValue = this.rowItem[dataIndex];
+        }
+        backData[dataIndex] = rowValue;
+      });
+      return backData;
+    },
+  },
   name: 'x-td',
   props: {
     from: String,
+    paddingLength: Number,
     isSticky: Boolean,
     noWrap: Boolean,
     columnLength: Number,
@@ -105,6 +143,31 @@ export default {
     },
   },
   methods: {
+    /**
+     * 单元格的对齐方式
+     * @param direction 对齐方向 left/right
+     * @return boolean
+     */
+    isAlign(direction) {
+      let alignData;
+      switch (this.from) {
+        case 'th': // 顶部标题
+          alignData = this.columnItem.align.title;
+          break;
+        case 'thd': // 顶部数据
+          alignData = this.columnItem.align.header;
+          break;
+        case 'td': // 内容数据
+          alignData = this.columnItem.align.content;
+          break;
+        case 'tf': // 底部数据
+          alignData = this.columnItem.align.footer;
+          break;
+        default:
+          break;
+      }
+      return alignData === direction;
+    },
     /**
      * 获取sticky的方向 left/right
      * @param dataIndex 列索引
@@ -156,47 +219,45 @@ export default {
      * @return {*}
      */
     getTdWidth(columnIndex, colSpan) {
-      let backWidth = this.colgroupData[columnIndex].width;
+      let backWidth = parseInt(this.colgroupData[columnIndex].width, 10);
       if (colSpan > 1) {
         for (let i = 1; i < colSpan; i += 1) {
-          backWidth += this.colgroupData[columnIndex + i].width;
+          backWidth += parseInt(this.colgroupData[columnIndex + i].width, 10);
         }
       }
-      return backWidth;
+      if (this.paddingLength) {
+        backWidth -= this.paddingLength;
+      }
+      return `${backWidth}px`;
     },
   },
 };
 </script>
 
 <style lang="less" scoped>
-  td{
-    > div {
-      position: relative;
-    }
-    &.x-left {
-      text-align: left !important;
-      >div {
-        padding: 0 8px;
-      }
-    }
-    &.x-right {
-      text-align: right !important;
-      >div {
-        padding: 0 8px;
-      }
-    }
-    .x-td {
-      white-space:pre-wrap;
-      word-wrap:break-word;
-    }
-    .x-td-nowrap{
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-  .x-search, .x-sort, x-filter{
+td{
+  > div {
     position: relative;
-    cursor: pointer;
+    box-sizing: border-box;
   }
+  &.x-left {
+    text-align: left !important;
+  }
+  &.x-right {
+    text-align: right !important;
+  }
+  .x-td {
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .x-td-nowrap{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.x-search, .x-sort, x-filter{
+  position: relative;
+  cursor: pointer;
+}
 </style>

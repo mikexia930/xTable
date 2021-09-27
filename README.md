@@ -1,18 +1,22 @@
 # x-table-vue
 
 > 表格列拖动改变宽度，表头列互换，固定表头，合并单元格。
+> 增加 localstorage 保存表头交互数据。
+> 增加列展开收起。
+> 增加透视表功能。
 > 源码有完整示例代码。
 
 [Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***
-* v1.0.5
+* v3.0.0
 
 ### 基于
 ***
 * vue2
 * sortablejs
+* lodash
 * css sticky [浏览器支持](https://developer.mozilla.org/zh-CN/docs/Web/CSS/position)
 * setPointerCapture [浏览器支持](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/setPointerCapture)
 
@@ -40,12 +44,14 @@ import { XTable } from 'x-table-vue';
 **组件中使用**
 ````
 <x-table
+    :is-use-storage="false"
     :is-use-single-table="isUseSingleTable"
     :is-fix-header="isFixHeader"
     :is-sticky="isSticky"
     :columns=tableColumns
     :config="tableConfig"
     :data="tableData"
+    :expand-data="tableExpandData"
     :title="tableHeaderTitle"
     :header-data="tableHeaderData"
     :footer-data="tableFooterData"
@@ -53,6 +59,7 @@ import { XTable } from 'x-table-vue';
     :sort-data="sortData"
     :search-data="searchData"
     :filter-data="filterData"
+    :pivot-table="pivotTable"
     @handleTable="handleTable"
 >
     <slot name="th-${dataIndex}">表头单元格内容插槽</slot>
@@ -68,10 +75,11 @@ import { XTable } from 'x-table-vue';
 </x-table>
 ````
 
-### 说明
+### 参数说明
 ***
 | 参数 | 类型 | 说明 |
 | ------ | ------ | ------ |
+|isUseStorage|boolean|是否启用storage缓存用户拖动交互后的column数据|
 |isUseSingleTable| boolean | 是否使用单表格，单表格为只有一个table标签，不支持固定在浏览器顶部，需要设置height属性 |
 |isFixHeader|boolean|固定表头开关|
 |isSticky|boolean|固定列开关|
@@ -79,12 +87,14 @@ import { XTable } from 'x-table-vue';
 |columns|array|表格所有的列数据，具体参考下方表头说明|
 |title|array|表头标题数据|
 |data|array|表格数据|
+|expandData|object|可展开行数据，只支持一层展开|
 |headerData|array|表头数据|
 |footerData|array|表尾数据|
 |pageData|object|分页信息|
 |sortData|object|列排序信息，每次只支持一列排序|
 |searchData|object|列查询数据，查询数据会叠加计算|
 |filterData|object|列筛选数据，筛选数据会叠加计算|
+|pivotTable|array|透视表，需要合并行的列，[列索引, 列索引]|
 
 ### tableConfig 说明
 ```
@@ -109,6 +119,7 @@ import { XTable } from 'x-table-vue';
     resizeable: true, // 是否开启拖动列改变列宽度，只在表头第一行绑定
     align: '', // 内容的对齐方式 left / right
     sticky: 'left'; // 列固定的方向，left / right
+    widthLock: false, // 列宽固定，固定的列宽不会被重新赋值
     width: '220px'; // 列宽度，如果固定列，这个值需设置
     serach: true; // 是否开启查询， 通过 slot 设置样式，并自行获取用户查询的值，通过改变prop searchData，触发表格查询
     sort: 'init'; // 是否开启排序 init / up / down， 通过 slot 设置样式，并自行获取用户设置的值，通过改变prop sortData值，触发表格排序。
@@ -124,6 +135,18 @@ import { XTable } from 'x-table-vue';
   value: '', // 名称值
 }
 ```
+
+### expandData 说明
+```
+{
+    rowKey: {
+        type: '', // span时为行合并，data时为数据合并
+        isOpen: false, // 是否打开，响应捕捉
+        data: [], // 数据同data，span时需设置colSpan为列数
+    }
+}
+```
+
 
 ### pageData 说明
 ```
@@ -167,6 +190,15 @@ import { XTable } from 'x-table-vue';
       value: [], // 已选中的值
     },
 }
+```
+
+### pivotTable 说明
+按下标顺序一级一级的透视
+```
+[
+    dataIndex // 筛选列的索引
+    dataIndex // 筛选列的索引
+]
 ```
 
 ### handleTable 说明
