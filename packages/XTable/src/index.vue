@@ -44,6 +44,7 @@
                   :column-length="tableColumns.length"
                   :drag-columns="dragColumns"
                   :resize-columns="resizeColumns"
+                  :custom-cell="customCell ? customCell.header : null"
                 >
                   <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
                     <slot
@@ -132,6 +133,7 @@
                   :column-length="tableColumns.length"
                   :drag-columns="dragColumns"
                   :resize-columns="resizeColumns"
+                  :custom-cell="customCell ? customCell.header : null"
                 >
                   <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
                     <slot
@@ -198,6 +200,7 @@
                     :sticky-left-columns="stickyLeftColumns"
                     :sticky-right-columns="stickyRightColumns"
                     :column-length="tableColumns.length"
+                    :custom-cell="customCell ? customCell.body : null"
                   >
                     <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text}">
                       <slot
@@ -228,6 +231,7 @@
                   :sticky-left-columns="stickyLeftColumns"
                   :sticky-right-columns="stickyRightColumns"
                   :column-length="tableColumns.length"
+                  :custom-cell="customCell ? customCell.footer : null"
                 >
                   <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
                     <slot
@@ -288,6 +292,7 @@ export default {
     searchData: Object, // { key1: string1, key2: string2 } key 为 dataIndex, string为查询关键词，多个查询会叠加作用
     filterData: Object, // { key1: array1, key2: array2 } key 为 dataIndex, array为已选中的值数组，多个筛选会叠加作用
     pivotTable: Array, // 数组不为空，则开启透视表（行合并）， [key1, key2] key 为 dataIndex，需要开启的列。多列开启,规则为 按数组下标顺序，按第一列组，第二列组依次合并，不在上一组的相同值不会合并。
+    customCell: Object, // td的自定义格式，{ header: (record, dataIndex) => {}, body: (record, dataIndex) => {}, , footer: (record, dataIndex) => {}}返回值必须为对象，现在只返回 style 和 class
   },
   components: {
     XTd,

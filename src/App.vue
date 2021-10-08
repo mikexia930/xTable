@@ -18,6 +18,7 @@
       :search-data="searchData"
       :filter-data="filterData"
       :pivot-table="['c1', 'c2']"
+      :custom-cell="customCell"
       @handleTable="handleTable"
     >
       <template v-slot:th-drag>
@@ -330,6 +331,23 @@ export default {
         border: 1, // 0 无边框， 1 有边框， 2 四周无边框
         rowKey: 'id',
         noWrap: true,
+      },
+      customCell: {
+        body: (record, dataIndex) => {
+          const backData = {
+            style: {},
+            class: {},
+          };
+          if (dataIndex === 'c5') {
+            backData.style = {
+              background: '#ff0000',
+            };
+            backData.class = {
+              'use-class': true,
+            };
+          }
+          return backData;
+        },
       },
       pageData: {
         page: 1,

@@ -1,7 +1,7 @@
 {
   "name": "x-table-vue",
   "description": "Vue component for table",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "keywords": [
     "vue",
     "component",
@@ -13,7 +13,8 @@
     "拖动排序",
     "表格拖动",
     "表头固定",
-    "透视表"
+    "透视表",
+    "自定义单元格"
   ],
   "license": "MIT",
   "private": false,

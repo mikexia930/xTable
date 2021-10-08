@@ -4,17 +4,17 @@
     :key="`${from}-${rowIndex}-${columnIndex}`"
     :colspan="getColSpan > 1 ? getColSpan : null"
     :rowspan="getRowSpan > 1 ? getRowSpan : null"
-    :class="{
+    :class="Object.assign({
       'x-fixed-column': getStickyDirection(columnItem.dataIndex),
       'x-left': isAlign('left'),
       'x-right': isAlign('right'),
       'x-drag-dom': from === 'th' && rowIndex === 0 && dragColumns.includes(columnItem.dataIndex),
-    }"
-    :style="getStickyDirection(columnItem.dataIndex) ? {
+    }, getCustomCell('class'))"
+    :style="Object.assign((getStickyDirection(columnItem.dataIndex) ? {
       [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (columnLength - 1), getStickyDirection(columnItem.dataIndex)),
       width: `${ colgroupData[columnIndex].width }`,
-      zIndex: from === 'th' ? 2 + (100-columnIndex) : 1 + (100-columnIndex)
-    } : {}"
+      zIndex: from === 'th' ? 2 + (100-columnIndex) : 1 + (100-columnIndex),
+    } : {}), getCustomCell('style'))"
     :group="from === 'th' && rowIndex === 0 ? (columnItem.dragGroup || '') : null"
   >
     <div
@@ -129,10 +129,11 @@ export default {
     colgroupData: Array,
     rowIndex: Number,
     rowItem: Object,
-    columnIndex: Number,
+    columnIndex: [Number, String],
     columnItem: Object,
     stickyLeftColumns: Array,
     stickyRightColumns: Array,
+    customCell: [Function, Object],
     dragColumns: {
       type: Array,
       default: () => [],
@@ -143,6 +144,20 @@ export default {
     },
   },
   methods: {
+    /**
+     * 获取 cell 配置的属性
+     * return {object}
+     */
+    getCustomCell(type) {
+      let backData = {};
+      if (this.customCell) {
+        const result = this.customCell(this.getCleanRowItem, this.columnItem.dataIndex);
+        if (result[type] && result[type] instanceof Object) {
+          backData = result[type];
+        }
+      }
+      return backData;
+    },
     /**
      * 单元格的对齐方式
      * @param direction 对齐方向 left/right
