@@ -4,13 +4,14 @@
 > 增加 localstorage 保存表头交互数据。
 > 增加列展开收起。
 > 增加透视表功能。
+> 增加 customeCell 自定义单元格的 class 和 style
 > 源码有完整示例代码。
 
 [Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***
-* v3.0.0
+* v3.1.0
 
 ### 基于
 ***
@@ -95,6 +96,7 @@ import { XTable } from 'x-table-vue';
 |searchData|object|列查询数据，查询数据会叠加计算|
 |filterData|object|列筛选数据，筛选数据会叠加计算|
 |pivotTable|array|透视表，需要合并行的列，[列索引, 列索引]|
+|customCell|object|自定义单元格class和style|
 
 ### tableConfig 说明
 ```
@@ -199,6 +201,32 @@ import { XTable } from 'x-table-vue';
     dataIndex // 筛选列的索引
     dataIndex // 筛选列的索引
 ]
+```
+
+### customCell 说明
+自定义单元格的 class 和 style
+```
+{
+    // record 当前行的值，dataIndex 当前列的索引
+    header: (record, dataIndex) => {
+       return {
+          class: {},
+          style: {},
+       }
+    },
+    body: (record, dataIndex) => {
+       return {
+          class: {},
+          style: {},
+       }
+    },
+    footer: (record, dataIndex) => {
+       return {
+          class: {},
+          style: {},
+       }
+    }
+}
 ```
 
 ### handleTable 说明
