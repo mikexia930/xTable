@@ -331,6 +331,7 @@ export default {
         border: 1, // 0 无边框， 1 有边框， 2 四周无边框
         rowKey: 'id',
         noWrap: true,
+        isUseNoWrapTitle: true, // 是否显示隐藏时的title
       },
       customCell: {
         body: (record, dataIndex) => {

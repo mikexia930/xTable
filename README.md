@@ -11,7 +11,7 @@
 
 ### 版本
 ***
-* v3.1.0
+* v3.1.2
 
 ### 基于
 ***
@@ -110,6 +110,7 @@ import { XTable } from 'x-table-vue';
     border: 1, // 0 无边框， 1 有边框， 2 四周无边框
     rowKey: 'id', // 循环表格数据的时候，:key 会取该设置的 data key的值
     noWrap: true, // 是否运行表格数据换行
+    isUseNoWrapTitle: true, // 是否显示隐藏时的title
 }
 ```
 

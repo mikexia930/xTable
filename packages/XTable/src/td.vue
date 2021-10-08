@@ -18,7 +18,7 @@
     :group="from === 'th' && rowIndex === 0 ? (columnItem.dragGroup || '') : null"
   >
     <div
-      :title="noWrap ? getTdValue : null"
+      :title="noWrap && isUseNoWrapTitle ? getTdValue : null"
       :class="noWrap ? 'x-td-nowrap' : 'x-td'"
       :style="{ width: getTdWidth(columnIndex, getColSpan) }"
     >
@@ -125,6 +125,7 @@ export default {
     paddingLength: Number,
     isSticky: Boolean,
     noWrap: Boolean,
+    isUseNoWrapTitle: Boolean,
     columnLength: Number,
     colgroupData: Array,
     rowIndex: Number,
