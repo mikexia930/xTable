@@ -10,8 +10,8 @@
       :config="tableConfig"
       :data="tableData"
       :title="tableHeaderTitle"
-      :headerData="tableHeaderData"
-      :footerData="tableFooterData"
+      :header-data="tableHeaderData"
+      :footer-data="tableFooterData"
       :expand-data="tableExpandData"
       :page-data="pageData"
       :sort-data="sortData"
@@ -19,16 +19,22 @@
       :filter-data="filterData"
       :pivot-table="['c1', 'c2']"
       :custom-cell="customCell"
+      :expand-join-filter-search-columns="['c2']"
+      expend-filter-search-result-show-type="fit"
       @handleTable="handleTable"
     >
       <template v-slot:th-drag>
         <a-icon type="more" />
       </template>
-      <template #td-c1="{ record, text }">
-        <div class="column-sticky">{{ text }}</div>
+      <template #td-c1="{ record, text, expand }">
+        <div class="column-sticky">{{ text }} {{ expand }}</div>
       </template>
       <template #td-operator="{ record }">
-        <div style="cursor: pointer" v-if="tableExpandData[record.id]" @click="handleExpand(record)">{{ tableExpandData[record.id] && tableExpandData[record.id].isOpen ? 'CLOSE' : 'OPEN' }}-{{ record.id }}</div>
+        <div style="cursor: pointer" @click="handleExpand(record)">
+          <span v-if="tableExpandData[record.id]">
+            {{tableExpandData[record.id].isOpen ? 'CLOSE' : 'OPEN' }}-{{ record.id }}
+          </span>
+        </div>
       </template>
       <template #th-sort-c1="{ record, dataIndex }">
         <span class="sort_icon"  @click="handleSort(dataIndex, record.sort)">
@@ -130,7 +136,7 @@ function generateTableData(listLength, columnLength, idPrefix = '') {
       }
       */
       if (j === 1) {
-        if (i < 25) {
+        if (i < 10) {
           obj[`c${j}`] = '1';
         } else {
           obj[`c${j}`] = `${i} * ${j} = ${i * j}`;
@@ -155,8 +161,8 @@ function generateTableData(listLength, columnLength, idPrefix = '') {
 function generateTableExpandData(listLength, columnLength) {
   // expand_rowKey 作为打开标识
   const expandObj = {};
-  const spanItemNumber = 30;
-  for (let i = 25; i <= listLength; i += 1) {
+  const spanItemNumber = 3;
+  for (let i = 10; i <= listLength; i += 1) {
     const expandItem = { // 必须以 'ex-' 开头
       isOpen: false,
       type: '', // span 合并单元格只支持slot / data 合并到当前数据里
@@ -271,7 +277,7 @@ function generateColumnData(labelLength) {
       obj.sticky = 'left';
       obj.width = '220px';
       obj.dragGroup = 'a1';
-      obj.serach = true; // 是否支持查询
+      obj.search = true; // 是否支持查询
       obj.sort = 'init'; // 是否支持排序 init / up / down
       obj.filter = true; // 是否支持筛选，取所有行的值，并筛选
     } else if (i >= labelLength) {
@@ -331,6 +337,7 @@ export default {
         border: 1, // 0 无边框， 1 有边框， 2 四周无边框
         rowKey: 'id',
         noWrap: true,
+        isUseNoWrapTitle: true,
       },
       customCell: {
         body: (record, dataIndex) => {

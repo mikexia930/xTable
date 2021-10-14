@@ -26,14 +26,19 @@
               >
             </colgroup>
             <thead class="x-head-dom">
-            <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
+            <tr
+              v-for="(titleItem, titleIndex) in title"
+              :key="`thr-${config.key}-${titleIndex}`"
+              :class="titleItem.$class"
+            >
               <template v-for="(columnItem, columnIndex) in tableColumnsHead">
                 <x-td
-                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                  :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
                   from="th"
                   :is-sticky="isSticky"
                   :padding-length="paddingLength"
                   :no-wrap="config.noWrap"
+                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="titleIndex"
                   :row-item="titleItem"
                   :column-index="columnIndex"
@@ -115,14 +120,19 @@
               >
             </colgroup>
             <thead v-if="isUseSingleTable" class="x-head-dom">
-            <tr v-for="(titleItem, titleIndex) in title" :key="`t-${config.key}-${titleIndex}`">
+            <tr
+              v-for="(titleItem, titleIndex) in title"
+              :key="`thr-${config.key}-${titleIndex}`"
+              :class="titleItem.$class"
+            >
               <template v-for="(columnItem, columnIndex) in tableColumnsHead">
                 <x-td
-                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                  :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
                   from="th"
                   :is-sticky="isSticky"
                   :padding-length="paddingLength"
                   :no-wrap="config.noWrap"
+                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="titleIndex"
                   :row-item="titleItem"
                   :column-index="columnIndex"
@@ -184,14 +194,20 @@
               </tr>
             </template>
             <template v-else>
-              <tr v-for="(rowItem, rowIndex) in showData" :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
+              <tr
+                v-for="(rowItem, rowIndex) in showData"
+                :key="`tdr-${config.key}-${rowIndex}`"
+                :class="rowItem.$class"
+                :ref="rowItem.$expandKey"
+              >
                 <template v-for="(columnItem, columnIndex) in tableColumns">
                   <x-td
-                    :key="`td-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
+                    :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
                     from="td"
                     :is-sticky="isSticky"
                     :padding-length="paddingLength"
                     :no-wrap="config.noWrap"
+                    :is-use-no-wrap-title="config.isUseNoWrapTitle"
                     :row-index="rowIndex"
                     :row-item="rowItem"
                     :column-index="columnIndex"
@@ -201,12 +217,14 @@
                     :sticky-right-columns="stickyRightColumns"
                     :column-length="tableColumns.length"
                     :custom-cell="customCell ? customCell.body : null"
+                    :expand-status="getExpandStatus(rowItem)"
                   >
-                    <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text}">
+                    <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
                       <slot
                         :name="`td-${columnItem.dataIndex}`"
                         :record="record"
                         :text="text"
+                        :expand="expand"
                       ></slot>
                     </template>
                   </x-td>
@@ -215,14 +233,19 @@
             </template>
             </tbody>
             <tfoot v-if="footerData && footerData.length > 0">
-            <tr v-for="(rowItem, rowIndex) in footerShowData" :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}`">
+            <tr
+              v-for="(rowItem, rowIndex) in footerShowData"
+              :key="`tfr-${config.key}-${rowIndex}`"
+              :class="rowItem.$class"
+            >
               <template v-for="(columnItem, columnIndex) in tableColumns">
                 <x-td
-                  :key="`tf-${config.key}-${rowItem[config.rowKey]}-${rowIndex}-${columnItem.dataIndex}`"
+                  :key="`tf-${config.key}-${rowIndex}-${columnIndex}`"
                   from="tf"
                   :is-sticky="isSticky"
                   :padding-length="paddingLength"
                   :no-wrap="config.noWrap"
+                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="rowIndex"
                   :row-item="rowItem"
                   :column-index="columnIndex"
@@ -276,7 +299,7 @@ export default {
   name: 'x-table',
   props: {
     isUseStorage: Boolean, // 是否启用缓存记录表格变化，位置和宽度
-    isUseSingleTable: Boolean, // 是否启用表头固定
+    isUseSingleTable: Boolean, // 是否使用单表格，高度固定时可以启用，避免渲染多个 table
     isFixHeader: Boolean, // 是否启用表头固定
     isSticky: Boolean, // 是否启用列固定，打开后columns里设置的sticky才有效果
     paddingLength: Number, // 表格 td padding 占位宽度，用于计算内部 dom 的宽度
@@ -293,6 +316,8 @@ export default {
     filterData: Object, // { key1: array1, key2: array2 } key 为 dataIndex, array为已选中的值数组，多个筛选会叠加作用
     pivotTable: Array, // 数组不为空，则开启透视表（行合并）， [key1, key2] key 为 dataIndex，需要开启的列。多列开启,规则为 按数组下标顺序，按第一列组，第二列组依次合并，不在上一组的相同值不会合并。
     customCell: Object, // td的自定义格式，{ header: (record, dataIndex) => {}, body: (record, dataIndex) => {}, , footer: (record, dataIndex) => {}}返回值必须为对象，现在只返回 style 和 class
+    expandJoinFilterSearchColumns: Array, // 表扩展列数据参与筛选的列
+    expendFilterSearchResultShowType: String, // 查询结果显示 open 全部打开 fit 符合的打开 close 全部关闭
   },
   components: {
     XTd,
@@ -319,7 +344,8 @@ export default {
         x: 0, // x坐标的数据
         y: 0, // y坐标的数据
       },
-      dataUse: [...this.data], // 保留prop data 为了排序还原数据使用
+      dataUse: cloneDeep(this.data), // 保留prop data 为了排序还原数据使用
+      expandUse: cloneDeep(this.expandData),
       showData: [], // 分页显示的数据
       isFixedHeader: false,
       domMap: {},
@@ -364,6 +390,9 @@ export default {
         case '2':
           backData = 'x-td-border';
           break;
+        case '3':
+          backData = 'x-td-border x-table-border-no-vertical';
+          break;
         default:
           break;
       }
@@ -386,6 +415,9 @@ export default {
           break;
         case '2':
           backData = 'x-td-border';
+          break;
+        case '3':
+          backData = 'x-td-border x-table-border-no-vertical';
           break;
         default:
           break;
@@ -425,7 +457,10 @@ export default {
   },
   watch: {
     columns: {
-      handler() {
+      handler(newVal) {
+        console.log('columns');
+        this.tableColumns = [...newVal];
+        this.tableColumnsHead = [...newVal];
         this.resetColumnsByStorage();
         this.initColumnWidth();
         this.initData();
@@ -434,7 +469,8 @@ export default {
     },
     data: {
       handler(newVal) {
-        this.dataUse = [...newVal];
+        console.log('data');
+        this.dataUse = cloneDeep(newVal);
         this.getShowData();
         if (newVal.length > 0) {
           this.$nextTick(() => {
@@ -449,6 +485,7 @@ export default {
      */
     pageData: {
       handler() {
+        console.log('pageData');
         this.resetPage('page');
       },
       deep: true,
@@ -459,6 +496,7 @@ export default {
     sortData: {
       handler(newVal) {
         if (this.data && this.data.length > 0) {
+          console.log('sortData', newVal);
           this.doSort(newVal.dataIndex, newVal.sortType);
         }
       },
@@ -470,6 +508,7 @@ export default {
     searchData: {
       handler(newVal) {
         if (this.data && this.data.length > 0) {
+          console.log('searchData', newVal);
           this.doSearch(newVal);
         }
       },
@@ -490,8 +529,10 @@ export default {
      * 监听表格扩展
      */
     expandData: {
-      handler() {
-        this.getShowData();
+      handler(newVal) {
+        // this.getShowData();
+        this.expandUse = cloneDeep(newVal);
+        this.openExpand();
       },
       deep: true,
     },
@@ -832,6 +873,19 @@ export default {
     },
     */
     /**
+     * row expand 的状态
+     * @param rowData
+     * @return {string}
+     */
+    getExpandStatus(rowData) {
+      const expandKey = rowData[this.config.rowKey];
+      let backData = '';
+      if (this.expandUse[expandKey]) {
+        backData = this.expandUse[expandKey].isOpen ? 'open' : 'close';
+      }
+      return backData;
+    },
+    /**
      * 获取当前页显示的数据
      * getRowSpan为设置当前页的行合并数据
      */
@@ -851,31 +905,118 @@ export default {
      * 打开行
      */
     getShowDataWithExpand(useData) {
-      const { expandData } = this;
+      const { expandUse } = this;
       const newShowData = [];
       useData.forEach((item) => {
         newShowData.push(item);
         const expandKey = item[this.config.rowKey];
-        if (expandData && expandData[expandKey] && expandData[expandKey].isOpen) {
+        if (expandUse && expandUse[expandKey] && expandUse[expandKey].isOpen) {
+          // 没有渲染过
           let curExpandData = [];
-          switch (expandData[expandKey].type) {
+          switch (expandUse[expandKey].type) {
             case 'span':
-              curExpandData = expandData[expandKey].data;
-              break;
             case 'data':
-              curExpandData = expandData[expandKey].data;
+              curExpandData = expandUse[expandKey].data;
               break;
             default:
               break;
           }
           if (curExpandData.length > 0) {
             curExpandData.forEach((curData) => {
-              newShowData.push(curData);
+              const useCurData = curData;
+              useCurData.$expandKey = this.getExpandRowRefKey(expandKey);
+              newShowData.push(useCurData);
             });
           }
         }
       });
       this.showData = newShowData;
+    },
+    /**
+     * 获取 expand 的 tr 的 getExpandRowRefKey
+     */
+    getExpandRowRefKey(expandKey) {
+      return `ex-${expandKey}`;
+    },
+    /**
+     * expand，从显示中找到有显示并打开的，如果没有 dom，证明需要把 expand 数据添加进去
+     * @params expandTRKey
+     * @param boolean status
+     */
+    openExpand() {
+      const { expandUse } = this;
+      const needAddExpandRowKeys = [];
+      this.showData.forEach((item) => {
+        if (!item.$expandKey) {
+          const expandKey = item[this.config.rowKey];
+          // 判断 dom 是否已经存在
+          const expandDom = this.$refs[this.getExpandRowRefKey(expandKey)];
+          if (expandUse && expandUse[expandKey]) {
+            if (expandUse[expandKey].isOpen) {
+              if (expandDom && expandDom.length > 0) {
+                this.switchExpand(expandDom, true);
+              } else {
+                // 需要添加数据到showData
+                needAddExpandRowKeys.push(expandKey);
+              }
+            } else {
+              this.switchExpand(expandDom, false);
+            }
+          }
+        }
+      });
+      if (needAddExpandRowKeys.length > 0) {
+        this.setExpandInShowData(needAddExpandRowKeys);
+      }
+    },
+    /**
+     * 设置 showData 里的 expand 数据
+     * @param rowKeys 需要添加 expand 数据的 rowKeys
+     */
+    setExpandInShowData(rowKeys) {
+      const { expandUse } = this;
+      const newShowData = [];
+      this.showData.forEach((item) => {
+        newShowData.push(item);
+        const expandKey = item[this.config.rowKey];
+        if (rowKeys.includes(expandKey)) {
+          // 没有渲染过
+          let curExpandData = [];
+          switch (expandUse[expandKey].type) {
+            case 'span':
+            case 'data':
+              curExpandData = expandUse[expandKey].data;
+              break;
+            default:
+              break;
+          }
+          if (curExpandData.length > 0) {
+            curExpandData.forEach((curData) => {
+              const useCurData = curData;
+              useCurData.$expandKey = this.getExpandRowRefKey(expandKey);
+              newShowData.push(useCurData);
+            });
+          }
+        }
+      });
+      this.showData = newShowData;
+    },
+    /**
+     * 开关 expandData
+     * @param expandDom array
+     * @param isOpen boolean
+     */
+    switchExpand(expandDom, isOpen) {
+      if (expandDom) {
+        const expandDomCopy = expandDom;
+        for (let i = 0; i < expandDomCopy.length; i += 1) {
+          if (isOpen) {
+            expandDomCopy[i].style.display = '';
+          } else {
+            expandDomCopy[i].style.display = 'none';
+          }
+        }
+      }
     },
     /**
      * 获取sticky的方向 left/right
@@ -1106,23 +1247,11 @@ export default {
     /**
      * 表头搜索数据计算
      * @param data 需要查询的数据
-     * @param searchData { key: value } key 对应 dataIndex, value(string) 对应查询关键词
+     * @param Object searchData // { key: value } key 对应 dataIndex, value(string) 对应查询关键词
      * @return {array}
      */
     getSearchData(data, searchData) {
-      return data.filter((itemData) => {
-        let backData = true;
-        Object.keys(searchData).forEach((key) => {
-          if (searchData[key]) {
-            if ((itemData[key].value.toString()).includes(searchData[key])) {
-              return false;
-            }
-            backData = false;
-          }
-          return true;
-        });
-        return backData;
-      });
+      return this.getSearchFilterData('search', data, searchData);
     },
     /**
      * 表头筛选数据，筛选完对对结果数据排序
@@ -1136,28 +1265,133 @@ export default {
     },
     /**
      * 表头筛选数据计算
+     * 如果 expand 参与筛选，先选出符合条件的 expand 的父id，然后再筛选 data 数据
      * @param data 需要筛选的数据
-     * @param filterData { key: value } key 对应 dataIndex, value(array) 对应已选中的
+     * @param Object filterData { key: value } key 对应 dataIndex, value(array) 对应已选中的
      * @return {array}
      */
     getFilterData(data, filterData) {
+      return this.getSearchFilterData('filter', data, filterData);
+    },
+    /**
+     * 获取查询的数据计算，主要筛选出符合条件的父节点，子里面只有有一个符合的，父和所有子全部显示
+     * @param from filter / search
+     * @param Object searchFilterData // { key: value } key 对应 dataIndex, value(string) 对应查询关键词
+     * @return {array}
+     */
+    getSearchFilterData(from, data, filterSearchData) {
+      const expandRowKeys = this.getSearchFilterExpandData(from, filterSearchData);
       return data.filter((itemData) => {
         let backData = true;
-        Object.keys(filterData).forEach((key) => {
-          if (filterData[key] && filterData[key].length > 0) {
+        const unFitColumns = [];
+        const rowKey = itemData[this.config.rowKey];
+        Object.keys(filterSearchData).forEach((key) => {
+          let isUseful = false;
+          if (filterSearchData[key]) {
+            if (from === 'filter') {
+              isUseful = filterSearchData[key].length > 0;
+            } else {
+              isUseful = true;
+            }
+          }
+          if (isUseful) {
             let curValue = '';
             if (itemData[key]) {
               curValue = itemData[key].value || itemData[key];
             }
-            if (filterData[key].includes(curValue)) {
-              return false;
+            let isInclude = false;
+            if (from === 'filter') {
+              isInclude = filterSearchData[key].includes(curValue);
+            } else if (from === 'search') {
+              isInclude = curValue.includes(filterSearchData[key]);
             }
-            backData = false;
+            if (!isInclude) {
+              backData = false;
+              unFitColumns.push(key);
+            }
           }
-          return true;
         });
+        // 如果某列的父不在，但子在，则也显示
+        if (!backData && expandRowKeys.length > 0 && expandRowKeys.includes(String(rowKey))) {
+          let isFitByChild = true;
+          unFitColumns.forEach((columnKey) => {
+            if (!expandRowKeys.includes(String(columnKey))) {
+              isFitByChild = false;
+            }
+          });
+          if (isFitByChild) {
+            backData = true;
+          }
+        }
+        if (backData && this.expendFilterSearchResultShowType === 'open' && this.expandUse[rowKey]) {
+          this.expandUse[rowKey].isOpen = true;
+        }
         return backData;
       });
+    },
+    /**
+     * 获取符合条件的expand的数据
+     * @param from
+     * @param filterSearchData
+     * @return {array}
+     */
+    getSearchFilterExpandData(from, filterSearchData) {
+      const { expandUse } = this;
+      const rowKeys = [];
+      if (this.expandJoinFilterSearchColumns && this.expandJoinFilterSearchColumns.length > 0 && expandUse) {
+        Object.keys(expandUse).forEach((rowKey) => {
+          const curExpandData = expandUse[rowKey];
+          let curExpandHasResult = false;
+          // 合并列模式不参与
+          if (curExpandData && curExpandData.type === 'data' && curExpandData.data && curExpandData.data.length > 0) {
+            curExpandData.data.forEach((itemData) => {
+              let backData = true;
+              if (!rowKeys.includes(rowKey)) {
+                Object.keys(filterSearchData).forEach((key) => {
+                  let isUseful = false;
+                  if (filterSearchData[key]) {
+                    if (from === 'filter') {
+                      isUseful = filterSearchData[key].length > 0;
+                    } else {
+                      isUseful = true;
+                    }
+                  }
+                  if (isUseful && this.expandJoinFilterSearchColumns.includes(key)) {
+                    let curValue = '';
+                    if (itemData[key]) {
+                      curValue = itemData[key].value || itemData[key];
+                    }
+                    let isInclude = false;
+                    if (from === 'filter') {
+                      isInclude = filterSearchData[key].includes(curValue);
+                    } else if (from === 'search') {
+                      isInclude = curValue.includes(filterSearchData[key]);
+                    }
+                    if (!isInclude) {
+                      backData = false;
+                      return false;
+                    }
+                  }
+                  return true;
+                });
+                if (backData) {
+                  rowKeys.push(rowKey);
+                  curExpandHasResult = true;
+                }
+              }
+              return backData;
+            });
+          }
+          if (curExpandHasResult) {
+            if (this.expendFilterSearchResultShowType !== 'close') {
+              expandUse[rowKey].isOpen = true;
+            }
+          } else {
+            expandUse[rowKey].isOpen = false;
+          }
+        });
+      }
+      return rowKeys;
     },
     /**
      *  表头排序
@@ -1425,7 +1659,7 @@ export default {
       position: absolute;
       box-sizing: border-box;
       width: 1px;
-      z-index: 1000;
+      z-index: 998;
       top: 48px;
       background-color: @lineColor;
     }
@@ -1440,7 +1674,7 @@ export default {
     .x-table-fix-header{
       top: 0;
       left: 0;
-      z-index: 10000;
+      z-index: 999;
       .x-sticky-shadow{
         height: 48px;
         top: 0;
@@ -1469,7 +1703,7 @@ export default {
     /deep/ .x-resize-dom-handle {
       position: absolute;
       right: 1px;
-      top: 10px;
+      top: 14px;
       display: none;
       width: 2px;
       height: 20px;
@@ -1481,7 +1715,7 @@ export default {
       left: 3px;
       display: none;
       cursor: move;
-      top: 1px;
+      top: 13px;
     }
     .x-fixed-table {
       border-collapse: collapse;
@@ -1513,6 +1747,11 @@ export default {
           &:after{
             width: 0;
           }
+        }
+      }
+      &.x-table-border-no-vertical {
+        td::after {
+          content: none;
         }
       }
     }

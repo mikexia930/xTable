@@ -4,14 +4,15 @@
 > 增加 localstorage 保存表头交互数据。
 > 增加列展开收起。
 > 增加透视表功能。
-> 增加 customeCell 自定义单元格的 class 和 style
+> 增加 customCell 自定义单元格的 class 和 style
+> 增加 extend 参与表头筛选
 > 源码有完整示例代码。
 
 [Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***
-* v3.1.0
+* v3.2.1
 
 ### 基于
 ***
@@ -61,6 +62,9 @@ import { XTable } from 'x-table-vue';
     :search-data="searchData"
     :filter-data="filterData"
     :pivot-table="pivotTable"
+    :custom-cell="customCell"
+    :expand-join-filter-search-columns="['c2']"
+    :expend-filter-search-result-show-type="'fit'"
     @handleTable="handleTable"
 >
     <slot name="th-${dataIndex}">表头单元格内容插槽</slot>
@@ -97,6 +101,8 @@ import { XTable } from 'x-table-vue';
 |filterData|object|列筛选数据，筛选数据会叠加计算|
 |pivotTable|array|透视表，需要合并行的列，[列索引, 列索引]|
 |customCell|object|自定义单元格class和style|
+|expandJoinFilterSearchColumns|array|参与筛选和查询的extendData [dataIndex, dataIndex]|
+|expendFilterSearchResultShowType|string|extend筛选结果的展示方式 fit：符合结果的extend展开 open：全部打开 close：全部不打开|
 
 ### tableConfig 说明
 ```
@@ -110,6 +116,7 @@ import { XTable } from 'x-table-vue';
     border: 1, // 0 无边框， 1 有边框， 2 四周无边框
     rowKey: 'id', // 循环表格数据的时候，:key 会取该设置的 data key的值
     noWrap: true, // 是否运行表格数据换行
+    isUseNoWrapTitle: true, // 是否显示隐藏时的title
 }
 ```
 
@@ -227,6 +234,19 @@ import { XTable } from 'x-table-vue';
        }
     }
 }
+```
+### expandJoinFilterSearchColumns 说明
+extend 参与表头查询和筛选的列，参数为列的 dataIndex
+```
+[dataIndex, dataIndex]
+```
+
+### expendFilterSearchResultShowType 说明
+extend 搜索结果的展示方式
+```
+fit：extend 里有符合条件的展开
+open：只有父和子里有一个符合条件就展开
+close：只展示父
 ```
 
 ### handleTable 说明
