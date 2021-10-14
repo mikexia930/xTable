@@ -26,6 +26,7 @@
         :name="`${from}-${columnItem.dataIndex}`"
         :record="getCleanRowItem"
         :text="getTdValue"
+        :expand="expandStatus"
       >
         <span>{{ getTdValue }}</span>
       </slot>
@@ -143,6 +144,7 @@ export default {
       type: Array,
       default: () => [],
     },
+    expandStatus: String,
   },
   methods: {
     /**
