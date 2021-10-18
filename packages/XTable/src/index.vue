@@ -33,7 +33,7 @@
             >
               <template v-for="(columnItem, columnIndex) in tableColumnsHead">
                 <x-td
-                  :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
+                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
                   from="th"
                   :is-sticky="isSticky"
                   :padding-length="paddingLength"
@@ -127,7 +127,7 @@
             >
               <template v-for="(columnItem, columnIndex) in tableColumnsHead">
                 <x-td
-                  :key="`th-${config.key}-${titleIndex}-${columnIndex}`"
+                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
                   from="th"
                   :is-sticky="isSticky"
                   :padding-length="paddingLength"
@@ -314,6 +314,7 @@ export default {
     sortData: Object, // 排序列数据 { dataIndex: 列索引, sortType: 排序方式 init/up/down }，同一时间只能对一个列排序
     searchData: Object, // { key1: string1, key2: string2 } key 为 dataIndex, string为查询关键词，多个查询会叠加作用
     filterData: Object, // { key1: array1, key2: array2 } key 为 dataIndex, array为已选中的值数组，多个筛选会叠加作用
+    expandAction: Object, // { dataIndex: open/close }
     pivotTable: Array, // 数组不为空，则开启透视表（行合并）， [key1, key2] key 为 dataIndex，需要开启的列。多列开启,规则为 按数组下标顺序，按第一列组，第二列组依次合并，不在上一组的相同值不会合并。
     customCell: Object, // td的自定义格式，{ header: (record, dataIndex) => {}, body: (record, dataIndex) => {}, , footer: (record, dataIndex) => {}}返回值必须为对象，现在只返回 style 和 class
     expandJoinFilterSearchColumns: Array, // 表扩展列数据参与筛选的列
@@ -345,7 +346,7 @@ export default {
         y: 0, // y坐标的数据
       },
       dataUse: cloneDeep(this.data), // 保留prop data 为了排序还原数据使用
-      expandUse: cloneDeep(this.expandData),
+      pageDataUse: { ...this.pageData },
       showData: [], // 分页显示的数据
       isFixedHeader: false,
       domMap: {},
@@ -440,7 +441,7 @@ export default {
      * 当前最大的页码
      */
     maxPage() {
-      return Math.ceil(this.dataAmount / this.pageData.size) || 1;
+      return Math.ceil(this.dataAmount / this.pageDataUse.size) || 1;
     },
     /**
      * 当前数据条数
@@ -457,10 +458,7 @@ export default {
   },
   watch: {
     columns: {
-      handler(newVal) {
-        console.log('columns');
-        this.tableColumns = [...newVal];
-        this.tableColumnsHead = [...newVal];
+      handler() {
         this.resetColumnsByStorage();
         this.initColumnWidth();
         this.initData();
@@ -469,8 +467,8 @@ export default {
     },
     data: {
       handler(newVal) {
-        console.log('data');
         this.dataUse = cloneDeep(newVal);
+        this.doReInitData('init');
         this.getShowData();
         if (newVal.length > 0) {
           this.$nextTick(() => {
@@ -481,12 +479,15 @@ export default {
       deep: true,
     },
     /**
-     * 监听换页和切换每页显示条数
+     * 监听切换每页显示条数
      */
     pageData: {
-      handler() {
-        console.log('pageData');
-        this.resetPage('page');
+      handler(newVal) {
+        if (newVal.size !== this.pageDataUse.size || newVal.page !== this.pageDataUse.page) {
+          this.pageDataUse.size = newVal.size;
+          this.pageDataUse.page = newVal.page;
+          this.resetPage('page');
+        }
       },
       deep: true,
     },
@@ -496,7 +497,6 @@ export default {
     sortData: {
       handler(newVal) {
         if (this.data && this.data.length > 0) {
-          console.log('sortData', newVal);
           this.doSort(newVal.dataIndex, newVal.sortType);
         }
       },
@@ -508,7 +508,6 @@ export default {
     searchData: {
       handler(newVal) {
         if (this.data && this.data.length > 0) {
-          console.log('searchData', newVal);
           this.doSearch(newVal);
         }
       },
@@ -526,13 +525,11 @@ export default {
       deep: true,
     },
     /**
-     * 监听表格扩展
+     * 监听表格展开
      */
-    expandData: {
+    expandAction: {
       handler(newVal) {
-        // this.getShowData();
-        this.expandUse = cloneDeep(newVal);
-        this.openExpand();
+        this.openExpand(newVal);
       },
       deep: true,
     },
@@ -880,8 +877,8 @@ export default {
     getExpandStatus(rowData) {
       const expandKey = rowData[this.config.rowKey];
       let backData = '';
-      if (this.expandUse[expandKey]) {
-        backData = this.expandUse[expandKey].isOpen ? 'open' : 'close';
+      if (this.expandData[expandKey]) {
+        backData = this.expandData[expandKey].isOpen ? 'open' : 'close';
       }
       return backData;
     },
@@ -890,8 +887,8 @@ export default {
      * getRowSpan为设置当前页的行合并数据
      */
     getShowData() {
-      const begin = (this.pageData.page - 1) * this.pageData.size;
-      const end = begin + this.pageData.size;
+      const begin = (this.pageDataUse.page - 1) * this.pageDataUse.size;
+      const end = begin + this.pageDataUse.size;
       // this.showData = this.getRowSpan(this.dataUse.slice(begin, end));
       let useData = [];
       if (this.pivotTable && this.pivotTable.length > 0) {
@@ -902,21 +899,31 @@ export default {
       this.getShowDataWithExpand(useData);
     },
     /**
-     * 打开行
+     * 设置 showData 里的 expand 数据
+     * @param useData
+     * @param rowKeys 需要添加 expand 数据的 rowKeys
      */
-    getShowDataWithExpand(useData) {
-      const { expandUse } = this;
+    getShowDataWithExpand(useData, rowKeys) {
+      const { expandData } = this;
       const newShowData = [];
       useData.forEach((item) => {
         newShowData.push(item);
         const expandKey = item[this.config.rowKey];
-        if (expandUse && expandUse[expandKey] && expandUse[expandKey].isOpen) {
+        let isAllow = true;
+        if (rowKeys) {
+          if (!rowKeys.includes(String(expandKey))) {
+            isAllow = false;
+          }
+        } else {
+          isAllow = expandData && expandData[expandKey] && expandData[expandKey].isOpen;
+        }
+        if (isAllow) {
           // 没有渲染过
           let curExpandData = [];
-          switch (expandUse[expandKey].type) {
+          switch (expandData[expandKey].type) {
             case 'span':
             case 'data':
-              curExpandData = expandUse[expandKey].data;
+              curExpandData = expandData[expandKey].data;
               break;
             default:
               break;
@@ -940,66 +947,32 @@ export default {
     },
     /**
      * expand，从显示中找到有显示并打开的，如果没有 dom，证明需要把 expand 数据添加进去
-     * @params expandTRKey
-     * @param boolean status
+     * @params expandActionData
      */
-    openExpand() {
-      const { expandUse } = this;
+    openExpand(expandActionData) {
+      const { expandData } = this;
       const needAddExpandRowKeys = [];
-      this.showData.forEach((item) => {
-        if (!item.$expandKey) {
-          const expandKey = item[this.config.rowKey];
-          // 判断 dom 是否已经存在
-          const expandDom = this.$refs[this.getExpandRowRefKey(expandKey)];
-          if (expandUse && expandUse[expandKey]) {
-            if (expandUse[expandKey].isOpen) {
-              if (expandDom && expandDom.length > 0) {
-                this.switchExpand(expandDom, true);
-              } else {
-                // 需要添加数据到showData
-                needAddExpandRowKeys.push(expandKey);
-              }
+      Object.keys(expandActionData).forEach((expandKey) => {
+        // 判断 dom 是否已经存在
+        const expandDom = this.$refs[this.getExpandRowRefKey(expandKey)];
+        if (expandData && expandData[expandKey]) {
+          if (expandActionData[expandKey] === 'open') {
+            expandData[expandKey].isOpen = true;
+            if (expandDom && expandDom.length > 0) {
+              this.switchExpand(expandDom, true);
             } else {
-              this.switchExpand(expandDom, false);
+              // 需要添加数据到showData
+              needAddExpandRowKeys.push(expandKey);
             }
+          } else {
+            expandData[expandKey].isOpen = false;
+            this.switchExpand(expandDom, false);
           }
         }
       });
       if (needAddExpandRowKeys.length > 0) {
-        this.setExpandInShowData(needAddExpandRowKeys);
+        this.getShowDataWithExpand(this.showData, needAddExpandRowKeys);
       }
-    },
-    /**
-     * 设置 showData 里的 expand 数据
-     * @param rowKeys 需要添加 expand 数据的 rowKeys
-     */
-    setExpandInShowData(rowKeys) {
-      const { expandUse } = this;
-      const newShowData = [];
-      this.showData.forEach((item) => {
-        newShowData.push(item);
-        const expandKey = item[this.config.rowKey];
-        if (rowKeys.includes(expandKey)) {
-          // 没有渲染过
-          let curExpandData = [];
-          switch (expandUse[expandKey].type) {
-            case 'span':
-            case 'data':
-              curExpandData = expandUse[expandKey].data;
-              break;
-            default:
-              break;
-          }
-          if (curExpandData.length > 0) {
-            curExpandData.forEach((curData) => {
-              const useCurData = curData;
-              useCurData.$expandKey = this.getExpandRowRefKey(expandKey);
-              newShowData.push(useCurData);
-            });
-          }
-        }
-      });
-      this.showData = newShowData;
     },
     /**
      * 开关 expandData
@@ -1230,6 +1203,15 @@ export default {
               this.dataUse = this.getSearchData(this.dataUse, this.searchData);
             }
             break;
+          case 'init':
+            if (this.isHasFilter()) {
+              this.dataUse = this.getFilterData(this.dataUse, this.filterData);
+            }
+            if (this.isHasSearch()) {
+              this.dataUse = this.getSearchData(this.dataUse, this.searchData);
+            }
+            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            break;
           default:
             break;
         }
@@ -1283,7 +1265,6 @@ export default {
       const expandRowKeys = this.getSearchFilterExpandData(from, filterSearchData);
       return data.filter((itemData) => {
         let backData = true;
-        const unFitColumns = [];
         const rowKey = itemData[this.config.rowKey];
         Object.keys(filterSearchData).forEach((key) => {
           let isUseful = false;
@@ -1307,24 +1288,15 @@ export default {
             }
             if (!isInclude) {
               backData = false;
-              unFitColumns.push(key);
             }
           }
         });
         // 如果某列的父不在，但子在，则也显示
         if (!backData && expandRowKeys.length > 0 && expandRowKeys.includes(String(rowKey))) {
-          let isFitByChild = true;
-          unFitColumns.forEach((columnKey) => {
-            if (!expandRowKeys.includes(String(columnKey))) {
-              isFitByChild = false;
-            }
-          });
-          if (isFitByChild) {
-            backData = true;
-          }
+          backData = true;
         }
-        if (backData && this.expendFilterSearchResultShowType === 'open' && this.expandUse[rowKey]) {
-          this.expandUse[rowKey].isOpen = true;
+        if (backData && this.expendFilterSearchResultShowType === 'open' && this.expandData[rowKey]) {
+          this.expandData[rowKey].isOpen = true;
         }
         return backData;
       });
@@ -1336,60 +1308,68 @@ export default {
      * @return {array}
      */
     getSearchFilterExpandData(from, filterSearchData) {
-      const { expandUse } = this;
+      const { expandData } = this;
       const rowKeys = [];
-      if (this.expandJoinFilterSearchColumns && this.expandJoinFilterSearchColumns.length > 0 && expandUse) {
-        Object.keys(expandUse).forEach((rowKey) => {
-          const curExpandData = expandUse[rowKey];
-          let curExpandHasResult = false;
-          // 合并列模式不参与
-          if (curExpandData && curExpandData.type === 'data' && curExpandData.data && curExpandData.data.length > 0) {
-            curExpandData.data.forEach((itemData) => {
-              let backData = true;
-              if (!rowKeys.includes(rowKey)) {
-                Object.keys(filterSearchData).forEach((key) => {
-                  let isUseful = false;
-                  if (filterSearchData[key]) {
-                    if (from === 'filter') {
-                      isUseful = filterSearchData[key].length > 0;
-                    } else {
-                      isUseful = true;
-                    }
-                  }
-                  if (isUseful && this.expandJoinFilterSearchColumns.includes(key)) {
-                    let curValue = '';
-                    if (itemData[key]) {
-                      curValue = itemData[key].value || itemData[key];
-                    }
-                    let isInclude = false;
-                    if (from === 'filter') {
-                      isInclude = filterSearchData[key].includes(curValue);
-                    } else if (from === 'search') {
-                      isInclude = curValue.includes(filterSearchData[key]);
-                    }
-                    if (!isInclude) {
-                      backData = false;
-                      return false;
-                    }
-                  }
-                  return true;
-                });
-                if (backData) {
-                  rowKeys.push(rowKey);
-                  curExpandHasResult = true;
-                }
-              }
-              return backData;
-            });
-          }
-          if (curExpandHasResult) {
-            if (this.expendFilterSearchResultShowType !== 'close') {
-              expandUse[rowKey].isOpen = true;
-            }
-          } else {
-            expandUse[rowKey].isOpen = false;
+      if (this.expandJoinFilterSearchColumns && this.expandJoinFilterSearchColumns.length > 0 && expandData) {
+        const usedFilterSearchData = {};
+        Object.keys(filterSearchData).forEach((dataIndex) => {
+          if (this.expandJoinFilterSearchColumns.includes(dataIndex)) {
+            usedFilterSearchData[dataIndex] = filterSearchData[dataIndex];
           }
         });
+        if (Object.keys(usedFilterSearchData).length > 0) {
+          Object.keys(expandData).forEach((rowKey) => {
+            const curExpandData = expandData[rowKey];
+            let curExpandHasResult = false;
+            // 合并列模式不参与
+            if (curExpandData && curExpandData.type === 'data' && curExpandData.data && curExpandData.data.length > 0) {
+              curExpandData.data.forEach((itemData) => {
+                let backData = true;
+                if (!rowKeys.includes(rowKey)) {
+                  Object.keys(usedFilterSearchData).forEach((key) => {
+                    let isUseful = false;
+                    if (usedFilterSearchData[key]) {
+                      if (from === 'filter') {
+                        isUseful = usedFilterSearchData[key].length > 0;
+                      } else {
+                        isUseful = true;
+                      }
+                    }
+                    if (isUseful && this.expandJoinFilterSearchColumns.includes(key)) {
+                      let curValue = '';
+                      if (itemData[key]) {
+                        curValue = itemData[key].value || itemData[key];
+                      }
+                      let isInclude = false;
+                      if (from === 'filter') {
+                        isInclude = usedFilterSearchData[key].includes(curValue);
+                      } else if (from === 'search') {
+                        isInclude = curValue.includes(usedFilterSearchData[key]);
+                      }
+                      if (!isInclude) {
+                        backData = false;
+                        return false;
+                      }
+                    }
+                    return true;
+                  });
+                  if (backData) {
+                    rowKeys.push(rowKey);
+                    curExpandHasResult = true;
+                  }
+                }
+                return backData;
+              });
+            }
+            if (curExpandHasResult) {
+              if (this.expendFilterSearchResultShowType !== 'close') {
+                expandData[rowKey].isOpen = true;
+              }
+            } else {
+              expandData[rowKey].isOpen = false;
+            }
+          });
+        }
       }
       return rowKeys;
     },
@@ -1474,12 +1454,12 @@ export default {
     resetPage(type, page = '') {
       let currentPage = page;
       if (!page) {
-        currentPage = this.pageData.page;
-        if (this.maxPage < this.pageData.page) {
+        currentPage = this.pageDataUse.page;
+        if (this.maxPage < this.pageDataUse.page) {
           currentPage = this.maxPage;
         }
       }
-      if (currentPage === this.pageData.page) {
+      if (currentPage === this.pageDataUse.page) {
         this.getShowData();
       }
       this.emitTo(type, {
@@ -1591,7 +1571,7 @@ export default {
             const dataIndex = firstRowEmptySpanKeys[i];
             dataCopy[0][dataIndex].rowSpan = rowSpanObj[dataIndex];
             rowSpanObj[dataIndex] = 1;
-            if (this.pageData.page > 1) {
+            if (this.pageDataUse.page > 1) {
               dataCopy[0][dataIndex].value = this.getLastRowSpanValue(dataIndex);
             }
           }
@@ -1606,7 +1586,7 @@ export default {
      */
     getLastRowSpanValue(dataIndex) {
       let backValue = '';
-      const begin = (this.pageData.page - 1) * this.pageData.size - 1;
+      const begin = (this.pageDataUse.page - 1) * this.pageDataUse.size - 1;
       for (let i = begin; i >= 0; i -= 1) {
         if (this.dataUse[i][dataIndex].rowSpan > 0) {
           backValue = this.dataUse[i][dataIndex].value;
@@ -1703,7 +1683,7 @@ export default {
     /deep/ .x-resize-dom-handle {
       position: absolute;
       right: 1px;
-      top: 14px;
+      top: 10px;
       display: none;
       width: 2px;
       height: 20px;
@@ -1715,7 +1695,7 @@ export default {
       left: 3px;
       display: none;
       cursor: move;
-      top: 13px;
+      top: 1px;
     }
     .x-fixed-table {
       border-collapse: collapse;

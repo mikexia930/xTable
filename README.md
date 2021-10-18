@@ -12,7 +12,7 @@
 
 ### 版本
 ***
-* v3.2.1
+* v3.2.2
 
 ### 基于
 ***
@@ -54,6 +54,7 @@ import { XTable } from 'x-table-vue';
     :config="tableConfig"
     :data="tableData"
     :expand-data="tableExpandData"
+    :expand-action="tableExpandAction"
     :title="tableHeaderTitle"
     :header-data="tableHeaderData"
     :footer-data="tableFooterData"
@@ -67,16 +68,16 @@ import { XTable } from 'x-table-vue';
     :expend-filter-search-result-show-type="'fit'"
     @handleTable="handleTable"
 >
-    <slot name="th-${dataIndex}">表头单元格内容插槽</slot>
-    <slot name="th-sort-${dataIndex}">表头排序插槽</slot>
-    <slot name="th-search-${dataIndex}">表头搜索插槽</slot>
-    <slot name="th-filter-${dataIndex}">表头筛选插槽</slot>
-    <slot name="th-drag">表头拖动交换位置插槽</slot>
-    <slot name="th-resize">表头拖动表格宽度插槽</slot>
+    <tempalte v-slot:[`th-${dataIndex}`]="{ record, text }">表头单元格内容插槽</tempalte>
+    <tempalte v-slot:[`th-sort-${dataIndex}`]="{ record, text }">表头排序插槽</tempalte>
+    <tempalte v-slot:[`th-search-${dataIndex}`]="{ record, text }">表头搜索插槽</tempalte>
+    <tempalte v-slot:[`th-filter-${dataIndex}`]="{ record, text }">表头筛选插槽</tempalte>
+    <tempalte v-slot:th-drag>表头拖动交换位置插槽</tempalte>
+    <tempalte v-slot:th-resize>表头拖动表格宽度插槽</tempalte>
     
-    <slot name="td-${dataIndex}">单元格内容插槽</slot>
+    <tempalte v-slot:[`td-${dataIndex}`]="{ record, text, expand }">单元格内容插槽，expand的状态 ''/open/close </tempalte>
     
-    <slot name="tf-${dataIndex}">尾部单元格内容插槽</slot>
+    <tempalte v-slot:[`tf-${dataIndex}`]="{ record, text }">尾部单元格内容插槽</tempalte>
 </x-table>
 ````
 
@@ -93,6 +94,7 @@ import { XTable } from 'x-table-vue';
 |title|array|表头标题数据|
 |data|array|表格数据|
 |expandData|object|可展开行数据，只支持一层展开|
+|expandAction|object|控制可展开行的展开关闭|
 |headerData|array|表头数据|
 |footerData|array|表尾数据|
 |pageData|object|分页信息|
@@ -156,6 +158,12 @@ import { XTable } from 'x-table-vue';
 }
 ```
 
+### expandAction 说明
+```
+{
+    rowKey: 'open/close'
+}
+```
 
 ### pageData 说明
 ```

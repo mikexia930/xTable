@@ -13,6 +13,7 @@
       :header-data="tableHeaderData"
       :footer-data="tableFooterData"
       :expand-data="tableExpandData"
+      :expand-action="tableExpandAction"
       :page-data="pageData"
       :sort-data="sortData"
       :search-data="searchData"
@@ -29,10 +30,10 @@
       <template #td-c1="{ record, text, expand }">
         <div class="column-sticky">{{ text }} {{ expand }}</div>
       </template>
-      <template #td-operator="{ record }">
-        <div style="cursor: pointer" @click="handleExpand(record)">
+      <template #td-operator="{ record, expand }">
+        <div style="cursor: pointer" @click="handleExpand(record, expand)">
           <span v-if="tableExpandData[record.id]">
-            {{tableExpandData[record.id].isOpen ? 'CLOSE' : 'OPEN' }}-{{ record.id }}
+            {{expand === 'open' ? 'CLOSE' : 'OPEN' }}-{{ record.id }}
           </span>
         </div>
       </template>
@@ -326,6 +327,7 @@ export default {
       tableFooterData: [], // 插在footer里的数据
       tableHeaderTitle: [], // 表头
       tableExpandData: {}, // 表格扩展
+      tableExpandAction: {}, // 打开或者关闭
       tableData: [],
       tableConfig: {
         key: 'table',
@@ -454,10 +456,11 @@ export default {
           break;
       }
     },
-    handleExpand(record) {
-      console.log('record', record);
+    handleExpand(record, expand) {
       if (this.tableExpandData[record.id]) {
-        this.tableExpandData[record.id].isOpen = !this.tableExpandData[record.id].isOpen;
+        this.tableExpandAction = {
+          [record.id]: expand === 'open' ? 'close' : 'open',
+        };
       }
     },
   },
