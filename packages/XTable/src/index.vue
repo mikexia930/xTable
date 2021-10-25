@@ -200,34 +200,63 @@
                 :class="rowItem.$class"
                 :ref="rowItem.$expandKey"
               >
-                <template v-for="(columnItem, columnIndex) in tableColumns">
+                <template v-if="rowItem.$expandType && rowItem.$expandType === 'span'">
                   <x-td
-                    :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
+                    :key="`td-${config.key}-${rowIndex}-${rowItem[config.rowKey]}`"
                     from="td"
+                    :is-span-expand="true"
                     :is-sticky="isSticky"
                     :padding-length="paddingLength"
                     :no-wrap="config.noWrap"
                     :is-use-no-wrap-title="config.isUseNoWrapTitle"
                     :row-index="rowIndex"
                     :row-item="rowItem"
-                    :column-index="columnIndex"
-                    :column-item="columnItem"
+                    :column-index="0"
+                    :column-item="getExpandSpanColumnData"
                     :colgroup-data="colgroupData"
-                    :sticky-left-columns="stickyLeftColumns"
-                    :sticky-right-columns="stickyRightColumns"
                     :column-length="tableColumns.length"
                     :custom-cell="customCell ? customCell.body : null"
-                    :expand-status="getExpandStatus(rowItem)"
                   >
-                    <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
+                    <template v-slot:[`td-${rowItem[config.rowKey]}`]="{ record, text, expand }">
                       <slot
-                        :name="`td-${columnItem.dataIndex}`"
+                        :name="`td-${rowItem[config.rowKey]}`"
                         :record="record"
                         :text="text"
                         :expand="expand"
                       ></slot>
                     </template>
                   </x-td>
+                </template>
+                <template v-else>
+                  <template v-for="(columnItem, columnIndex) in tableColumns">
+                    <x-td
+                      :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
+                      from="td"
+                      :is-sticky="isSticky"
+                      :padding-length="paddingLength"
+                      :no-wrap="config.noWrap"
+                      :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                      :row-index="rowIndex"
+                      :row-item="rowItem"
+                      :column-index="columnIndex"
+                      :column-item="columnItem"
+                      :colgroup-data="colgroupData"
+                      :sticky-left-columns="stickyLeftColumns"
+                      :sticky-right-columns="stickyRightColumns"
+                      :column-length="tableColumns.length"
+                      :custom-cell="customCell ? customCell.body : null"
+                      :expand-status="getExpandStatus(rowItem)"
+                    >
+                      <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
+                        <slot
+                          :name="`td-${columnItem.dataIndex}`"
+                          :record="record"
+                          :text="text"
+                          :expand="expand"
+                        ></slot>
+                      </template>
+                    </x-td>
+                  </template>
                 </template>
               </tr>
             </template>
@@ -319,6 +348,7 @@ export default {
     customCell: Object, // td的自定义格式，{ header: (record, dataIndex) => {}, body: (record, dataIndex) => {}, , footer: (record, dataIndex) => {}}返回值必须为对象，现在只返回 style 和 class
     expandJoinFilterSearchColumns: Array, // 表扩展列数据参与筛选的列
     expendFilterSearchResultShowType: String, // 查询结果显示 open 全部打开 fit 符合的打开 close 全部关闭
+    expandSpanColumnData: Object, // { rowKey: {}, common: {} } 没有 rowKey 的时候使用 common
   },
   components: {
     XTd,
@@ -362,6 +392,17 @@ export default {
     };
   },
   computed: {
+    getExpandSpanColumnData(rowIndex) {
+      let backData = {};
+      if (this.expandSpanColumnData) {
+        if (this.expandSpanColumnData[rowIndex]) {
+          backData = this.expandSpanColumnData[rowIndex];
+        } else if (this.expandSpanColumnData.common) {
+          backData = this.expandSpanColumnData.common;
+        }
+      }
+      return backData;
+    },
     /**
      * 百分比转具体值，保证浮动表头和内容的列宽一致
      */
@@ -920,7 +961,8 @@ export default {
         if (isAllow) {
           // 没有渲染过
           let curExpandData = [];
-          switch (expandData[expandKey].type) {
+          const expandType = expandData[expandKey].type;
+          switch (expandType) {
             case 'span':
             case 'data':
               curExpandData = expandData[expandKey].data;
@@ -931,7 +973,24 @@ export default {
           if (curExpandData.length > 0) {
             curExpandData.forEach((curData) => {
               const useCurData = curData;
+              if (expandType === 'span') {
+                const { dataIndex } = this.getExpandSpanColumnData;
+                let curValue = '';
+                if (curData[dataIndex]) {
+                  if (typeof curData[dataIndex] === 'object') {
+                    curValue = curData[dataIndex].value;
+                  } else {
+                    curValue = curData[dataIndex];
+                  }
+                }
+                useCurData[dataIndex] = {
+                  value: curValue,
+                  colSpan: this.columns.length,
+                  rowSpan: 1,
+                };
+              }
               useCurData.$expandKey = this.getExpandRowRefKey(expandKey);
+              useCurData.$expandType = expandType;
               newShowData.push(useCurData);
             });
           }

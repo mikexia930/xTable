@@ -12,7 +12,7 @@
 
 ### 版本
 ***
-* v3.2.2
+* v3.2.3
 
 ### 基于
 ***
@@ -55,6 +55,7 @@ import { XTable } from 'x-table-vue';
     :data="tableData"
     :expand-data="tableExpandData"
     :expand-action="tableExpandAction"
+    :expand-span-column-data="tableExpandSpanColumnData"
     :title="tableHeaderTitle"
     :header-data="tableHeaderData"
     :footer-data="tableFooterData"
@@ -95,6 +96,7 @@ import { XTable } from 'x-table-vue';
 |data|array|表格数据|
 |expandData|object|可展开行数据，只支持一层展开|
 |expandAction|object|控制可展开行的展开关闭|
+|expandSpanColumnData|object|控制展开行合并的column数据，数据格式同columns|
 |headerData|array|表头数据|
 |footerData|array|表尾数据|
 |pageData|object|分页信息|
@@ -162,6 +164,20 @@ import { XTable } from 'x-table-vue';
 ```
 {
     rowKey: 'open/close'
+}
+```
+
+### expandSpanColumnData 说明
+```
+{
+    rowKey: { // 单独设置某个合并行的样式
+        dataIndex: `显示数据的索引，对应 data 里的 key`,
+        align: '', // 内容的对齐方式 left / right
+    },
+    common: { // 如果没有单独合并行的数据，则使用该数据
+        dataIndex: `显示数据的索引，对应 data 里的 key`,
+        align: '', // 内容的对齐方式 left / right
+    }
 }
 ```
 
