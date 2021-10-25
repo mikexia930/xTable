@@ -14,6 +14,7 @@
       :footer-data="tableFooterData"
       :expand-data="tableExpandData"
       :expand-action="tableExpandAction"
+      :expand-span-column-data="tableExpandSpanColumnData"
       :page-data="pageData"
       :sort-data="sortData"
       :search-data="searchData"
@@ -183,15 +184,7 @@ function generateTableExpandData(listLength, columnLength) {
       Object.keys(expandItem.data[0]).forEach((key) => {
         if (key !== 'id') {
           if (index === 0) {
-            expandItem.data[0][key] = {
-              ...expandItem.data[0][key],
-              colSpan: columnLength,
-            };
-          } else {
-            expandItem.data[0][key] = {
-              ...expandItem.data[0][key],
-              colSpan: 0,
-            };
+            expandItem.data[0].span = '12323';
           }
           index += 1;
         }
@@ -311,6 +304,21 @@ export default {
   name: 'App',
   created() {
     this.tableColumns = generateColumnData(30);
+    this.tableExpandSpanColumnData = {
+      common: {
+        dataIndex: 'span',
+        sticky: '',
+        width: '',
+        dragGroup: '',
+        resizeable: false,
+        align: {
+          title: '',
+          header: '',
+          content: 'left',
+          footer: '',
+        },
+      },
+    };
     this.tableData = generateTableData(100, 30);
     this.tableHeaderTitle = generateTableTitle(30);
     this.tableFooterData = generateTableFooterData(2, 30);
@@ -327,6 +335,7 @@ export default {
       tableFooterData: [], // 插在footer里的数据
       tableHeaderTitle: [], // 表头
       tableExpandData: {}, // 表格扩展
+      tableExpandSpanColumnData: {}, // 表格扩展的表格数据 {rowKey: {配置}, common: {} }
       tableExpandAction: {}, // 打开或者关闭
       tableData: [],
       tableConfig: {

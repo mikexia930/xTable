@@ -1,7 +1,6 @@
 <template>
   <td
     v-if="getColSpan && getRowSpan"
-    :key="`${from}-${rowIndex}-${columnIndex}`"
     :colspan="getColSpan > 1 ? getColSpan : null"
     :rowspan="getRowSpan > 1 ? getRowSpan : null"
     :class="Object.assign({
@@ -10,17 +9,13 @@
       'x-right': isAlign('right'),
       'x-drag-dom': from === 'th' && rowIndex === 0 && dragColumns.includes(columnItem.dataIndex),
     }, getCustomCell('class'))"
-    :style="Object.assign((getStickyDirection(columnItem.dataIndex) ? {
-      [getStickyDirection(columnItem.dataIndex)]: getStickyDistance(columnIndex, (columnLength - 1), getStickyDirection(columnItem.dataIndex)),
-      width: `${ colgroupData[columnIndex].width }`,
-      zIndex: from === 'th' ? 2 + (100-columnIndex) : 1 + (100-columnIndex),
-    } : {}), getCustomCell('style'))"
+    :style="getTdStyle"
     :group="from === 'th' && rowIndex === 0 ? (columnItem.dragGroup || '') : null"
   >
     <div
       :title="noWrap && isUseNoWrapTitle ? getTdValue : null"
       :class="noWrap ? 'x-td-nowrap' : 'x-td'"
-      :style="{ width: getTdWidth(columnIndex, getColSpan) }"
+      :style="{ width: isSpanExpand ? null : getTdWidth(columnIndex, getColSpan) }"
     >
       <slot
         :name="`${from}-${columnItem.dataIndex}`"
@@ -86,19 +81,38 @@ export default {
     getColSpan() {
       let backData = 1;
       if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
-        backData = this.rowItem[this.columnItem.dataIndex].colSpan;
+        if (this.rowItem[this.columnItem.dataIndex].colSpan === undefined) {
+          backData = 1;
+        } else {
+          backData = this.rowItem[this.columnItem.dataIndex].colSpan;
+        }
       }
-      return backData;
+      return parseInt(String(backData), 10);
     },
     getRowSpan() {
       let backData = 1;
       if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
-        backData = this.rowItem[this.columnItem.dataIndex].rowSpan;
+        if (this.rowItem[this.columnItem.dataIndex].colSpan === undefined) {
+          backData = 1;
+        } else {
+          backData = this.rowItem[this.columnItem.dataIndex].rowSpan;
+        }
       }
+      return parseInt(String(backData), 10);
+    },
+    getTdStyle() {
+      const customCellStyle = this.getCustomCell('style');
+      const style = this.getStickyDirection(this.columnItem.dataIndex) ? {
+        [this.getStickyDirection(this.columnItem.dataIndex)]: this.getStickyDistance(this.columnIndex, (this.columnLength - 1), this.getStickyDirection(this.columnItem.dataIndex)),
+        width: this.isSpanExpand ? null : this.getTdWidth(this.columnIndex, this.getColSpan),
+        zIndex: this.from === 'th' ? 2 + (100 - this.columnIndex) : 1 + (100 - this.columnIndex),
+      } : {};
+      const backData = Object.assign(style, customCellStyle);
       return backData;
     },
     getTdValue() {
       let backData = '';
+
       if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
         backData = this.rowItem[this.columnItem.dataIndex].value;
       } else {
@@ -145,6 +159,7 @@ export default {
       default: () => [],
     },
     expandStatus: String,
+    isSpanExpand: Boolean,
   },
   methods: {
     /**
@@ -167,22 +182,24 @@ export default {
      * @return boolean
      */
     isAlign(direction) {
-      let alignData;
-      switch (this.from) {
-        case 'th': // 顶部标题
-          alignData = this.columnItem.align.title;
-          break;
-        case 'thd': // 顶部数据
-          alignData = this.columnItem.align.header;
-          break;
-        case 'td': // 内容数据
-          alignData = this.columnItem.align.content;
-          break;
-        case 'tf': // 底部数据
-          alignData = this.columnItem.align.footer;
-          break;
-        default:
-          break;
+      let alignData = '';
+      if (this.columnItem && this.columnItem.align) {
+        switch (this.from) {
+          case 'th': // 顶部标题
+            alignData = this.columnItem.align.title;
+            break;
+          case 'thd': // 顶部数据
+            alignData = this.columnItem.align.header;
+            break;
+          case 'td': // 内容数据
+            alignData = this.columnItem.align.content;
+            break;
+          case 'tf': // 底部数据
+            alignData = this.columnItem.align.footer;
+            break;
+          default:
+            break;
+        }
       }
       return alignData === direction;
     },
@@ -194,9 +211,9 @@ export default {
     getStickyDirection(dataIndex) {
       let backData = '';
       if (this.isSticky) {
-        if (this.stickyLeftColumns.includes(dataIndex)) {
+        if (this.stickyLeftColumns && this.stickyLeftColumns.includes(dataIndex)) {
           backData = 'left';
-        } else if (this.stickyRightColumns.includes(dataIndex)) {
+        } else if (this.stickyRightColumns && this.stickyRightColumns.includes(dataIndex)) {
           backData = 'right';
         }
       }
