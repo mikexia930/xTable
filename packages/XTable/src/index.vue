@@ -217,7 +217,7 @@
                     :column-length="tableColumns.length"
                     :custom-cell="customCell ? customCell.body : null"
                   >
-                    <template v-slot:[`td-${rowItem[config.rowKey]}`]="{ record, text, expand }">
+                    <template v-slot:[`td-${getExpandSpanColumnData.dataIndex}`]="{ record, text, expand }">
                       <slot
                         :name="`td-${rowItem[config.rowKey]}`"
                         :record="record"
@@ -392,14 +392,10 @@ export default {
     };
   },
   computed: {
-    getExpandSpanColumnData(rowIndex) {
+    getExpandSpanColumnData() {
       let backData = {};
-      if (this.expandSpanColumnData) {
-        if (this.expandSpanColumnData[rowIndex]) {
-          backData = this.expandSpanColumnData[rowIndex];
-        } else if (this.expandSpanColumnData.common) {
-          backData = this.expandSpanColumnData.common;
-        }
+      if (this.expandSpanColumnData && this.expandSpanColumnData.common) {
+        backData = this.expandSpanColumnData.common;
       }
       return backData;
     },
