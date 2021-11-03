@@ -254,14 +254,17 @@ export default {
      * @return {*}
      */
     getTdWidth(columnIndex, colSpan) {
-      let backWidth = parseInt(this.colgroupData[columnIndex].width, 10);
-      if (colSpan > 1) {
-        for (let i = 1; i < colSpan; i += 1) {
-          backWidth += parseInt(this.colgroupData[columnIndex + i].width, 10);
+      let backWidth = 0;
+      if (this.colgroupData[columnIndex] && this.colgroupData[columnIndex].width) {
+        backWidth = parseInt(this.colgroupData[columnIndex].width, 10);
+        if (colSpan > 1) {
+          for (let i = 1; i < colSpan; i += 1) {
+            backWidth += parseInt(this.colgroupData[columnIndex + i].width, 10);
+          }
         }
-      }
-      if (this.paddingLength) {
-        backWidth -= this.paddingLength;
+        if (this.paddingLength) {
+          backWidth -= this.paddingLength;
+        }
       }
       return `${backWidth}px`;
     },

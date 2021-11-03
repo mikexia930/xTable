@@ -576,16 +576,25 @@ export default {
       this.initWrap();
       this.initColumnWidth();
     }, 500);
+    /*
     if (this.tableColumns.length > 0) {
       this.initColumnWidth();
       this.initData();
       this.getShowData();
     }
+    */
   },
   mounted() {
     this.initWrap();
     if (this.tableColumns.length > 0) {
-      this.initDom();
+      if (this.tableColumns.length > 0) {
+        // 数据格式化
+        this.initColumnWidth();
+        this.initData();
+        this.getShowData();
+        // dom 监听
+        this.initDom();
+      }
     }
   },
   beforeDestroy() {
@@ -760,9 +769,29 @@ export default {
       return backData;
     },
     /**
+     * 初始化百分比的宽度到数字，小数点后2位
+     */
+    initColumnPercentWidth() {
+      const columnData = [];
+      this.columns.forEach((column) => {
+        const itemData = column;
+        if (itemData.width) {
+          const widthStr = String(column.width);
+          if (widthStr.substring(widthStr.length - 1) === '%') {
+            itemData.width = (this.wrapAreaWidth * (parseFloat(itemData.width) / 100)).toFixed(0);
+            itemData.width = `${itemData.width}px`;
+          }
+        }
+        columnData.push(itemData);
+      });
+      this.tableColumns = [...columnData];
+      this.tableColumnsHead = [...columnData];
+    },
+    /**
      * 重置列宽，如果列宽小于表格区域宽度，则最后一列自适应，如果最后一列也设置了宽度，强制取消
      */
     initColumnWidth() {
+      this.initColumnPercentWidth();
       const { miniWidth } = this.config;
       let totalColumnWidth = 0;
       let withOutLastColumnWidth = 0;
