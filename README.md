@@ -12,7 +12,7 @@
 
 ### 版本
 ***
-* v3.2.3
+* v3.2.5
 
 ### 基于
 ***
@@ -170,11 +170,7 @@ import { XTable } from 'x-table-vue';
 ### expandSpanColumnData 说明
 ```
 {
-    rowKey: { // 单独设置某个合并行的样式
-        dataIndex: `显示数据的索引，对应 data 里的 key`,
-        align: '', // 内容的对齐方式 left / right
-    },
-    common: { // 如果没有单独合并行的数据，则使用该数据
+    common: { // span的 column 数据
         dataIndex: `显示数据的索引，对应 data 里的 key`,
         align: '', // 内容的对齐方式 left / right
     }
