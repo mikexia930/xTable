@@ -357,8 +357,8 @@ export default {
     return {
       wrapAreaWidth: 0,
       wrapLeftSpan: 0,
-      tableColumns: [...this.columns],
-      tableColumnsHead: [...this.columns], // 为了拖动表格后的顺序bug，单独生产一个头部使用的列数据
+      tableColumns: [],
+      tableColumnsHead: [], // 为了拖动表格后的顺序bug，单独生产一个头部使用的列数据
       stickyLeftColumns: [], // 需要left sticky的列数组，[ dataIndex ]
       stickyRightColumns: [], // 需要right sticky的列数组，[ dataIndex ]
       colgroupData: [], // 列宽数据
@@ -496,6 +496,7 @@ export default {
   watch: {
     columns: {
       handler() {
+        this.initColumnPercentWidth();
         this.resetColumnsByStorage();
         this.initColumnWidth();
         this.initData();
@@ -784,14 +785,13 @@ export default {
         }
         columnData.push(itemData);
       });
-      this.tableColumns = [...columnData];
-      this.tableColumnsHead = [...columnData];
+      this.tableColumns = cloneDeep(columnData);
+      this.tableColumnsHead = cloneDeep(columnData);
     },
     /**
      * 重置列宽，如果列宽小于表格区域宽度，则最后一列自适应，如果最后一列也设置了宽度，强制取消
      */
     initColumnWidth() {
-      this.initColumnPercentWidth();
       const { miniWidth } = this.config;
       let totalColumnWidth = 0;
       let withOutLastColumnWidth = 0;
