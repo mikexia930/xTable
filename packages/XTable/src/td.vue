@@ -19,7 +19,7 @@
     >
       <slot
         :name="`${from}-${columnItem.dataIndex}`"
-        :record="getCleanRowItem"
+        :record="cleanRowItem"
         :text="getTdValue"
         :expand="expandStatus"
       >
@@ -120,19 +120,6 @@ export default {
       }
       return backData;
     },
-    getCleanRowItem() {
-      const backData = {};
-      Object.keys(this.rowItem).forEach((dataIndex) => {
-        let rowValue;
-        if (typeof this.rowItem[dataIndex] === 'object') {
-          rowValue = this.rowItem[dataIndex].value;
-        } else {
-          rowValue = this.rowItem[dataIndex];
-        }
-        backData[dataIndex] = rowValue;
-      });
-      return backData;
-    },
   },
   name: 'x-td',
   props: {
@@ -160,6 +147,7 @@ export default {
     },
     expandStatus: String,
     isSpanExpand: Boolean,
+    cleanRowItem: Object,
   },
   methods: {
     /**
@@ -169,7 +157,7 @@ export default {
     getCustomCell(type) {
       let backData = {};
       if (this.customCell) {
-        const result = this.customCell(this.getCleanRowItem, this.columnItem.dataIndex);
+        const result = this.customCell(this.cleanRowItem, this.columnItem.dataIndex);
         if (result[type] && result[type] instanceof Object) {
           backData = result[type];
         }

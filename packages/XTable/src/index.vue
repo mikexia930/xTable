@@ -41,6 +41,7 @@
                   :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="titleIndex"
                   :row-item="titleItem"
+                  :clean-row-item="titleItem"
                   :column-index="columnIndex"
                   :column-item="columnItem"
                   :colgroup-data="colgroupData"
@@ -135,6 +136,7 @@
                   :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="titleIndex"
                   :row-item="titleItem"
+                  :clean-row-item="titleItem"
                   :column-index="columnIndex"
                   :column-item="columnItem"
                   :colgroup-data="colgroupData"
@@ -211,6 +213,7 @@
                     :is-use-no-wrap-title="config.isUseNoWrapTitle"
                     :row-index="rowIndex"
                     :row-item="rowItem"
+                    :clean-row-item="getCleanRowItem('td', rowItem)"
                     :column-index="0"
                     :column-item="getExpandSpanColumnData"
                     :colgroup-data="colgroupData"
@@ -238,6 +241,7 @@
                       :is-use-no-wrap-title="config.isUseNoWrapTitle"
                       :row-index="rowIndex"
                       :row-item="rowItem"
+                      :clean-row-item="getCleanRowItem('td', rowItem)"
                       :column-index="columnIndex"
                       :column-item="columnItem"
                       :colgroup-data="colgroupData"
@@ -277,6 +281,7 @@
                   :is-use-no-wrap-title="config.isUseNoWrapTitle"
                   :row-index="rowIndex"
                   :row-item="rowItem"
+                  :clean-row-item="getCleanRowItem('tf', rowItem)"
                   :column-index="columnIndex"
                   :column-item="columnItem"
                   :colgroup-data="colgroupData"
@@ -320,7 +325,7 @@
 
 <script>
 import Sortable from 'sortablejs';
-import { debounce, cloneDeep } from 'lodash';
+import { cloneDeep, throttle } from 'lodash';
 import { getStorage, setStorage, removeStorage } from './storage';
 import XTd from './td.vue';
 
@@ -357,8 +362,8 @@ export default {
     return {
       wrapAreaWidth: 0,
       wrapLeftSpan: 0,
-      tableColumns: [],
-      tableColumnsHead: [], // 为了拖动表格后的顺序bug，单独生产一个头部使用的列数据
+      tableColumns: cloneDeep(this.columns),
+      tableColumnsHead: cloneDeep(this.columns), // 为了拖动表格后的顺序bug，单独生产一个头部使用的列数据
       stickyLeftColumns: [], // 需要left sticky的列数组，[ dataIndex ]
       stickyRightColumns: [], // 需要right sticky的列数组，[ dataIndex ]
       colgroupData: [], // 列宽数据
@@ -389,9 +394,49 @@ export default {
         leftHeader: `${this.config.key}-x-sticky-left-header-shadow`, // 表头 left sticky的阴影条
         rightHeader: `${this.config.key}-x-sticky-right-header-shadow`, // 表头 right sticky的阴影条
       },
+      debounceInitWrap: null,
     };
   },
   computed: {
+    /**
+     * 获取 rowkey 的 object，用于返回原始值
+     */
+    originData() {
+      const backData = {};
+      if (Array.isArray(this.data)) {
+        this.data.forEach((item) => {
+          backData[item[this.config.rowKey]] = item;
+        });
+      }
+      return backData;
+    },
+    /**
+     * 获取 rowkey 的 object，用于返回原始值
+     */
+    originFooterData() {
+      const backData = {};
+      if (Array.isArray(this.footerData)) {
+        this.footerData.forEach((item) => {
+          backData[item[this.config.rowKey]] = item;
+        });
+      }
+      return backData;
+    },
+    /**
+     * 获取 rowkey 的 object，用于返回原始值
+     */
+    originHeaderData() {
+      const backData = {};
+      if (Array.isArray(this.headerData)) {
+        this.headerData.forEach((item) => {
+          backData[item[this.config.rowKey]] = item;
+        });
+      }
+      return backData;
+    },
+    /**
+     * 获取expand span 类型的 columnData 数据
+     */
     getExpandSpanColumnData() {
       let backData = {};
       if (this.expandSpanColumnData && this.expandSpanColumnData.common) {
@@ -573,33 +618,27 @@ export default {
     },
   },
   created() {
-    window.onresize = debounce(() => {
+    this.debounceInitWrap = throttle(() => {
       this.initWrap();
       this.initColumnWidth();
-    }, 500);
-    /*
-    if (this.tableColumns.length > 0) {
-      this.initColumnWidth();
-      this.initData();
-      this.getShowData();
-    }
-    */
+      this.autoResizeLastColumn();
+    }, 32);
+    window.addEventListener('resize', this.debounceInitWrap);
   },
   mounted() {
     this.initWrap();
     if (this.tableColumns.length > 0) {
-      if (this.tableColumns.length > 0) {
-        // 数据格式化
-        this.initColumnWidth();
-        this.initData();
-        this.getShowData();
-        // dom 监听
-        this.initDom();
-      }
+      // 数据格式化
+      this.initColumnWidth();
+      this.initData();
+      this.getShowData();
+      // dom 监听
+      this.initDom();
+      this.autoResizeLastColumn();
     }
   },
   beforeDestroy() {
-    // TODO
+    window.removeEventListener('resize', this.debounceInitWrap);
   },
   methods: {
     /**
@@ -682,6 +721,15 @@ export default {
         }
       });
     },
+    autoResizeLastColumn() {
+      const lastIndex = this.colgroupData.length - 1;
+      const restWidth = this.wrapAreaWidth - this.colgroupData
+        .filter((d, i) => i !== lastIndex)
+        .map((d) => parseFloat(d.width))
+        .reduce((a, b) => a + b, 0) - 6;
+      const minWidth = parseFloat(this.config.miniWidth || '');
+      this.colgroupData[lastIndex].width = restWidth > minWidth ? `${restWidth}px` : `${minWidth}px`;
+    },
     /**
      * 表头切换的时候重新绑定事件
      */
@@ -711,6 +759,39 @@ export default {
           this.doDrag();
         }
       });
+    },
+    /**
+     * 获取原始的输入数据
+     */
+    getCleanRowItem(from, rowItem) {
+      let backData;
+      let useData;
+      switch (from) {
+        case 'th':
+          useData = this.originHeaderData;
+          break;
+        case 'tf':
+          useData = this.originFooterData;
+          break;
+        case 'td':
+          useData = this.originData;
+          break;
+        default:
+          break;
+      }
+      if (useData) {
+        backData = useData[rowItem[this.config.rowKey]];
+        /*
+        useData.some((item, index) => {
+          if (item[this.config.rowKey] === rowItem[this.config.rowKey]) {
+            backData = item;
+            return true;
+          }
+          return false;
+        });
+        */
+      }
+      return backData;
     },
     /**
      * 根据 storage 的缓存顺序和宽度，重置
@@ -813,6 +894,7 @@ export default {
       this.tableColumns.forEach((column, index) => {
         let curColumnWidth = 0;
         if (column.width) {
+          // 如果是百分比则换算位数字
           curColumnWidth = parseFloat(column.width);
           settleColumnWidth += curColumnWidth;
         } else if (miniWidth) {
@@ -1176,6 +1258,7 @@ export default {
       this.colgroupData.splice(this.initResize.index, 1, {
         width,
       });
+      this.autoResizeLastColumn();
       this.setColumnsStorage();
     },
     /**
@@ -1639,7 +1722,10 @@ export default {
         });
         for (let i = length; i >= 0; i -= 1) {
           Object.keys(dataCopy[i]).forEach((dataIndex) => {
-            const curRowSpan = dataCopy[i][dataIndex].rowSpan;
+            let curRowSpan = 0;
+            if (dataCopy[i][dataIndex] && dataCopy[i][dataIndex].rowSpan) {
+              curRowSpan = dataCopy[i][dataIndex].rowSpan;
+            }
             if (curRowSpan === 0) {
               rowSpanObj[dataIndex] += 1;
             } else if (curRowSpan > 1) {
