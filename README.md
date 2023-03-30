@@ -1,22 +1,25 @@
 # x-table-vue
 
 > 表格列拖动改变宽度，表头列互换，固定表头，合并单元格。
-> 增加 localstorage 保存表头交互数据。
-> 增加列展开收起。
-> 增加透视表功能。
-> 增加 customCell 自定义单元格的 class 和 style
-> 增加 extend 参与表头筛选
+> localstorage 保存表头交互数据。
+> 行展开收起。
+> 透视表功能。
+> customCell 自定义单元格的 class 和 style
+> extend 参与筛选
+> checkbox 选择列
+> waterfall 滚动加载更多
+> 
 > 源码有完整示例代码。
 
 [Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***
-* v3.2.7
+* v4.0.0
 
 ### 基于
 ***
-* vue2
+* vue2/vue3
 * sortablejs
 * lodash
 * css sticky [浏览器支持](https://developer.mozilla.org/zh-CN/docs/Web/CSS/position)
@@ -25,7 +28,6 @@
 ### 安装
 ***
 ````
-npm install sortablejs
 npm install x-table-vue
 ````
 
@@ -84,29 +86,31 @@ import { XTable } from 'x-table-vue';
 
 ### 参数说明
 ***
-| 参数 | 类型 | 说明 |
-| ------ | ------ | ------ |
-|isUseStorage|boolean|是否启用storage缓存用户拖动交互后的column数据|
-|isUseSingleTable| boolean | 是否使用单表格，单表格为只有一个table标签，不支持固定在浏览器顶部，需要设置height属性 |
-|isFixHeader|boolean|固定表头开关|
-|isSticky|boolean|固定列开关|
-|config|object|表格配置数据，具体参考下方配置说明|
-|columns|array|表格所有的列数据，具体参考下方表头说明|
-|title|array|表头标题数据|
-|data|array|表格数据|
-|expandData|object|可展开行数据，只支持一层展开|
-|expandAction|object|控制可展开行的展开关闭|
-|expandSpanColumnData|object|控制展开行合并的column数据，数据格式同columns|
-|headerData|array|表头数据|
-|footerData|array|表尾数据|
-|pageData|object|分页信息|
-|sortData|object|列排序信息，每次只支持一列排序|
-|searchData|object|列查询数据，查询数据会叠加计算|
-|filterData|object|列筛选数据，筛选数据会叠加计算|
-|pivotTable|array|透视表，需要合并行的列，[列索引, 列索引]|
-|customCell|object|自定义单元格class和style|
-|expandJoinFilterSearchColumns|array|参与筛选和查询的extendData [dataIndex, dataIndex]|
-|expendFilterSearchResultShowType|string|extend筛选结果的展示方式 fit：符合结果的extend展开 open：全部打开 close：全部不打开|
+| 参数                               | 类型      | 说明                                                      |
+|----------------------------------|---------|---------------------------------------------------------|
+| isUseStorage                     | boolean | 是否启用storage缓存用户拖动交互后的column数据                           |
+| isUseSingleTable                 | boolean | 是否使用单表格，单表格为只有一个table标签，不支持固定在浏览器顶部，需要设置height属性        |
+| isFixHeader                      | boolean | 固定表头开关                                                  |
+| isSticky                         | boolean | 固定列开关                                                   |
+| config                           | object  | 表格配置数据，具体参考下方配置说明                                       |
+| columns                          | array   | 表格所有的列数据，具体参考下方表头说明                                     |
+| title                            | array   | 表头标题数据                                                  |
+| data                             | array   | 表格数据                                                    |
+| expandData                       | object  | 可展开行数据，只支持一层展开                                          |
+| expandAction                     | object  | 控制可展开行的展开关闭                                             |
+| expandSpanColumnData             | object  | 控制展开行合并的column数据，数据格式同columns                           |
+| headerData                       | array   | 表头数据                                                    |
+| footerData                       | array   | 表尾数据                                                    |
+| pageData                         | object  | 分页信息                                                    |
+| sortData                         | object  | 列排序信息，每次只支持一列排序                                         |
+| searchData                       | object  | 列查询数据，查询数据会叠加计算                                         |
+| filterData                       | object  | 列筛选数据，筛选数据会叠加计算                                         |
+| pivotTable                       | array   | 透视表，需要合并行的列，[列索引, 列索引]                                  |
+| customCell                       | object  | 自定义单元格class和style                                       |
+| expandJoinFilterSearchColumns    | array   | 参与筛选和查询的extendData [dataIndex, dataIndex]               |
+| expendFilterSearchResultShowType | string  | extend筛选结果的展示方式 fit：符合结果的extend展开 open：全部打开 close：全部不打开 |
+| checkboxSelectedData             | array   | checkbox 开启时的已选中值                                       |
+| isWaterfall                      | boolean | 开启滚动加载更多                                                |
 
 ### tableConfig 说明
 ```
@@ -114,17 +118,20 @@ import { XTable } from 'x-table-vue';
     key: 'table', // 同页面有多个table组件时，区分不同表格使用，主要用在dom id上，所以需保证唯一。
     scrollHeight: '100%', // 表格的高度，超过高度，table会出现y轴滚动条，设置成100%，则根据父组件的设置。
     scrollWidth: '100%', // 表格的宽度，超过宽度，tbale会出现x轴滚动条，设置成100%，则根据父组件的设置。
+    scrollBarWidth: 15, // 滚动条宽度
+    scrollBarHeight: 15, // 滚动条高度
     miniWidth: '160px', // columns 里没有设置表格宽度的列会默认使用最小width
     resizeMin: 160, // 动态改变表格列宽时，最小的宽度，小于当前宽度，会取该宽度值
     resizeMax: 500, // 动态改变表格列宽时，最大的宽度，大于当前宽度，会取该宽度值
     border: 1, // 0 无边框， 1 有边框， 2 四周无边框
-    rowKey: 'id', // 循环表格数据的时候，:key 会取该设置的 data key的值
+    rowKey: 'id', // 循环表格数据的时候，:key 会取该设置的 data key 的值
     noWrap: true, // 是否运行表格数据换行
     isUseNoWrapTitle: true, // 是否显示隐藏时的title
 }
 ```
 
 ### columns 说明
+> checkbox 为 dataIndex 的保留值，需要使用多选按钮时，把 dataIndex 设置为该值。
 ```
 {
     dataIndex: `显示数据的索引，对应 data 里的 key`,

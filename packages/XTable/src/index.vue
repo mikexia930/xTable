@@ -14,8 +14,8 @@
         <div
           :id="domInit.header"
           class="x-table-content"
-          :class="headBorder"
-          :style="{ width: styleTable.width, overflow: 'hidden' }"
+          :class="[headBorder, { 'x-sticky-top-shadow': isFixedHeader }]"
+          :style="{ width: styleTable.width, overflow: 'hidden'}"
         >
           <table class="x-fixed-table">
             <colgroup>
@@ -57,7 +57,13 @@
                       :name="`th-${columnItem.dataIndex}`"
                       :record="record"
                       :text="text"
-                    ></slot>
+                      :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
+                      :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
+                    >
+                      <template v-if="columnItem.dataIndex === 'checkbox'">
+                        <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
+                      </template>
+                    </slot>
                   </template>
                   <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
                     <slot
@@ -110,6 +116,7 @@
         class="x-table-content"
         :class="contentBorder"
         :style="styleTable"
+        @scroll="handleScroll"
       >
         <div>
           <table class="x-fixed-table">
@@ -152,7 +159,13 @@
                       :name="`th-${columnItem.dataIndex}`"
                       :record="record"
                       :text="text"
-                    ></slot>
+                      :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
+                      :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
+                    >
+                      <template v-if="columnItem.dataIndex === 'checkbox'">
+                        <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
+                      </template>
+                    </slot>
                   </template>
                   <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
                     <slot
@@ -196,45 +209,17 @@
               </tr>
             </template>
             <template v-else>
-              <tr
-                v-for="(rowItem, rowIndex) in showData"
-                :key="`tdr-${config.key}-${rowIndex}`"
-                :class="rowItem.$class"
-                :ref="rowItem.$expandKey"
-              >
-                <template v-if="rowItem.$expandType && rowItem.$expandType === 'span'">
-                  <x-td
-                    :key="`td-${config.key}-${rowIndex}-${rowItem[config.rowKey]}`"
-                    from="td"
-                    :is-span-expand="true"
-                    :is-sticky="isSticky"
-                    :padding-length="paddingLength"
-                    :no-wrap="config.noWrap"
-                    :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                    :row-index="rowIndex"
-                    :row-item="rowItem"
-                    :clean-row-item="getCleanRowItem('td', rowItem)"
-                    :column-index="0"
-                    :column-item="getExpandSpanColumnData"
-                    :colgroup-data="colgroupData"
-                    :column-length="tableColumns.length"
-                    :custom-cell="customCell ? customCell.body : null"
-                  >
-                    <template v-slot:[`td-${getExpandSpanColumnData.dataIndex}`]="{ record, text, expand }">
-                      <slot
-                        :name="`td-${rowItem[config.rowKey]}`"
-                        :record="record"
-                        :text="text"
-                        :expand="expand"
-                      ></slot>
-                    </template>
-                  </x-td>
-                </template>
-                <template v-else>
-                  <template v-for="(columnItem, columnIndex) in tableColumns">
+              <template v-for="(rowItem, rowIndex) in showData">
+                <tr
+                  :key="`tdr-${config.key}-${rowIndex}`"
+                  :class="rowItem.$expandType ? 'x-expand-child' : rowItem.$class"
+                  :ref="rowItem.$expandKey"
+                >
+                  <template v-if="rowItem.$expandType && rowItem.$expandType === 'span'">
                     <x-td
-                      :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
+                      :key="`td-${config.key}-${rowIndex}-${rowItem[config.rowKey]}`"
                       from="td"
+                      :is-span-expand="true"
                       :is-sticky="isSticky"
                       :padding-length="paddingLength"
                       :no-wrap="config.noWrap"
@@ -242,27 +227,72 @@
                       :row-index="rowIndex"
                       :row-item="rowItem"
                       :clean-row-item="getCleanRowItem('td', rowItem)"
-                      :column-index="columnIndex"
-                      :column-item="columnItem"
+                      :column-index="0"
+                      :column-item="getExpandSpanColumnData"
                       :colgroup-data="colgroupData"
-                      :sticky-left-columns="stickyLeftColumns"
-                      :sticky-right-columns="stickyRightColumns"
                       :column-length="tableColumns.length"
                       :custom-cell="customCell ? customCell.body : null"
-                      :expand-status="getExpandStatus(rowItem)"
                     >
-                      <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
+                      <template
+                        v-slot:[`td-${getExpandSpanColumnData.dataIndex}`]="{
+                            record,
+                            text,
+                            expand
+                          }"
+                      >
                         <slot
-                          :name="`td-${columnItem.dataIndex}`"
+                          :name="`td-${getExpandSpanColumnData.dataIndex}`"
                           :record="record"
                           :text="text"
                           :expand="expand"
-                        ></slot>
+                        />
                       </template>
                     </x-td>
                   </template>
-                </template>
-              </tr>
+                  <template v-else>
+                    <template v-for="(columnItem, columnIndex) in tableColumns">
+                      <x-td
+                        :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
+                        from="td"
+                        :is-sticky="isSticky"
+                        :padding-length="paddingLength"
+                        :no-wrap="config.noWrap"
+                        :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                        :row-index="rowIndex"
+                        :row-item="rowItem"
+                        :clean-row-item="getCleanRowItem('td', rowItem)"
+                        :column-index="columnIndex"
+                        :column-item="columnItem"
+                        :colgroup-data="colgroupData"
+                        :sticky-left-columns="stickyLeftColumns"
+                        :sticky-right-columns="stickyRightColumns"
+                        :column-length="tableColumns.length"
+                        :custom-cell="customCell ? customCell.body : null"
+                        :expand-status="getExpandStatus(rowItem)"
+                      >
+                        <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
+                          <slot
+                            :name="`td-${columnItem.dataIndex}`"
+                            :record="record"
+                            :text="text"
+                            :expand="expand"
+                            :checkbox="columnItem.dataIndex === 'checkbox' ? handleTDCheckbox : null"
+                            :checked="columnItem.dataIndex === 'checkbox' ? checkboxSelectedData.includes(record[config.rowKey]): null"
+                          >
+                            <template v-if="columnItem.dataIndex === 'checkbox'">
+                              <input
+                                type="checkbox"
+                                :checked="checkboxSelectedData.includes(record[config.rowKey])"
+                                @input="(selected) => handleTDCheckbox(selected, record)"
+                              />
+                            </template>
+                          </slot>
+                        </template>
+                      </x-td>
+                    </template>
+                  </template>
+                </tr>
+              </template>
             </template>
             </tbody>
             <tfoot v-if="footerData && footerData.length > 0">
@@ -325,7 +355,7 @@
 
 <script>
 import Sortable from 'sortablejs';
-import { cloneDeep, throttle } from 'lodash';
+import { cloneDeep, throttle, forEach } from 'lodash';
 import { getStorage, setStorage, removeStorage } from './storage';
 import XTd from './td.vue';
 
@@ -353,7 +383,9 @@ export default {
     customCell: Object, // td的自定义格式，{ header: (record, dataIndex) => {}, body: (record, dataIndex) => {}, , footer: (record, dataIndex) => {}}返回值必须为对象，现在只返回 style 和 class
     expandJoinFilterSearchColumns: Array, // 表扩展列数据参与筛选的列
     expendFilterSearchResultShowType: String, // 查询结果显示 open 全部打开 fit 符合的打开 close 全部关闭
-    expandSpanColumnData: Object, // { rowKey: {}, common: {} } 没有 rowKey 的时候使用 common
+    expandSpanColumnData: Object, // 展开为合并表格的时候设置 { rowKey: {}, common: {} } 没有 rowKey 的时候使用 common
+    checkboxSelectedData: Array,
+    isWaterfall: Boolean, // 是否开启滚动加载
   },
   components: {
     XTd,
@@ -395,9 +427,23 @@ export default {
         rightHeader: `${this.config.key}-x-sticky-right-header-shadow`, // 表头 right sticky的阴影条
       },
       debounceInitWrap: null,
+      isCheckboxSelectAll: false,
+      isLoadWaterfallData: false,
     };
   },
   computed: {
+    /**
+     * 滚动条宽度
+     */
+    scrollBarWidth() {
+      return this.config.scrollBarWidth || 0;
+    },
+    /**
+     * 滚动条高度
+     */
+    scrollBarHeight() {
+      return this.config.scrollBarHeight || 0;
+    },
     /**
      * 获取 rowkey 的 object，用于返回原始值
      */
@@ -406,6 +452,15 @@ export default {
       if (Array.isArray(this.data)) {
         this.data.forEach((item) => {
           backData[item[this.config.rowKey]] = item;
+        });
+      }
+      if (this.expandData) {
+        Object.keys(this.expandData).forEach((expandKey) => {
+          if (this.expandData[expandKey].data && Array.isArray(this.expandData[expandKey].data)) {
+            this.expandData[expandKey].data.forEach((item) => {
+              backData[item[this.config.rowKey]] = item;
+            });
+          }
         });
       }
       return backData;
@@ -541,9 +596,7 @@ export default {
   watch: {
     columns: {
       handler() {
-        this.initColumnPercentWidth();
         this.resetColumnsByStorage();
-        this.initColumnWidth();
         this.initData();
       },
       deep: true,
@@ -570,6 +623,7 @@ export default {
           this.pageDataUse.size = newVal.size;
           this.pageDataUse.page = newVal.page;
           this.resetPage('page');
+          this.getCheckboxSelectedAll();
         }
       },
       deep: true,
@@ -616,14 +670,21 @@ export default {
       },
       deep: true,
     },
+    /**
+     * 全局筛选
+     */
+    checkboxSelectedData: {
+      handler() {
+        this.getCheckboxSelectedAll();
+      },
+    },
   },
   created() {
     this.debounceInitWrap = throttle(() => {
       this.initWrap();
-      this.initColumnWidth();
-      this.autoResizeLastColumn();
-    }, 32);
-    window.addEventListener('resize', this.debounceInitWrap);
+      this.resetColumnsByStorage();
+      this.initData();
+    }, 15);
   },
   mounted() {
     this.initWrap();
@@ -631,10 +692,16 @@ export default {
       // 数据格式化
       this.initColumnWidth();
       this.initData();
+      this.doReInitData('init');
       this.getShowData();
       // dom 监听
-      this.initDom();
-      this.autoResizeLastColumn();
+      this.$nextTick(() => {
+        this.initDom();
+      });
+      this.resizeObserver = new ResizeObserver(() => {
+        this.debounceInitWrap();
+      });
+      this.resizeObserver.observe(this.getDomMap('dynamic', 'wrap'));
     }
   },
   beforeDestroy() {
@@ -647,7 +714,11 @@ export default {
     initWrap() {
       const wrapDom = this.getDomMap('dynamic', 'wrap');
       if (wrapDom) {
-        this.wrapLeftSpan = wrapDom.getBoundingClientRect().left;
+        if (wrapDom?.getBoundingClientRect) {
+          this.wrapLeftSpan = wrapDom.getBoundingClientRect().left;
+        } else {
+          this.wrapLeftSpan = 0;
+        }
         this.wrapAreaWidth = wrapDom.clientWidth;
       }
     },
@@ -800,41 +871,48 @@ export default {
       const { key } = this.config;
       const storageData = getStorage(key);
       let curColumns = this.columns;
-      if (!this.isUseStorage) {
-        // 删除
-        if (storageData) {
-          removeStorage(key);
-        }
+      if (!storageData) {
+        this.initColumnPercentWidth();
+        this.initColumnWidth();
       } else {
-        // 获取
-        const newColumns = [];
-        const hadColumns = [];
-        if (storageData && Array.isArray(storageData)) {
-          storageData.forEach((item) => {
-            const columnData = this.getColumnDataByDataIndex(item.dataIndex);
-            if (columnData) {
-              newColumns.push({
-                ...columnData,
-                width: item.width,
-              });
-              hadColumns.push(item.dataIndex);
+        if (!this.isUseStorage) {
+          // 删除
+          if (storageData) {
+            removeStorage(key);
+          }
+          this.initColumnPercentWidth();
+          this.initColumnWidth();
+        } else {
+          // 获取
+          const newColumns = [];
+          const hadColumns = [];
+          if (storageData && Array.isArray(storageData)) {
+            storageData.forEach((item) => {
+              const columnData = this.getColumnDataByDataIndex(item.dataIndex);
+              if (columnData) {
+                newColumns.push({
+                  ...columnData,
+                  width: item.width,
+                });
+                hadColumns.push(item.dataIndex);
+              }
+            });
+            // 验证现有 column 数据
+            let isHasNoStorageColumn = false;
+            this.columns.forEach((item) => {
+              if (!hadColumns.includes(item.dataIndex)) {
+                isHasNoStorageColumn = true;
+              }
+            });
+            // 如果 缓存的 columns 和 当前的不一样，则取当前的
+            if (!isHasNoStorageColumn) {
+              curColumns = newColumns;
             }
-          });
-          // 验证现有 column 数据
-          let isHasNoStorageColumn = false;
-          this.columns.forEach((item) => {
-            if (!hadColumns.includes(item.dataIndex)) {
-              isHasNoStorageColumn = true;
-            }
-          });
-          // 如果 缓存的 columns 和 当前的不一样，则取当前的
-          if (!isHasNoStorageColumn) {
-            curColumns = newColumns;
           }
         }
+        this.tableColumns = cloneDeep(curColumns);
+        this.tableColumnsHead = cloneDeep(curColumns);
       }
-      this.tableColumns = cloneDeep(curColumns);
-      this.tableColumnsHead = cloneDeep(curColumns);
     },
     /**
      * 通过 dataIndex 获取 column 的值
@@ -905,8 +983,10 @@ export default {
           withOutLastColumnWidth += curColumnWidth;
         }
       });
+      // 滚动条宽度
+      totalColumnWidth += this.scrollBarWidth;
       if (totalColumnWidth < this.wrapAreaWidth) {
-        const lastWithoutSettleWidth = this.wrapAreaWidth - settleColumnWidth;
+        const lastWithoutSettleWidth = this.wrapAreaWidth - settleColumnWidth - this.scrollBarWidth;
         const emptyColumnLength = emptyWidthColumns.length;
         const settleColumnLength = settleWidthColumns.length;
         if (emptyColumnLength > 0) {
@@ -920,7 +1000,10 @@ export default {
             } else {
               curItemWidth = everyWidth;
             }
-            this.tableColumns[itemIndex].width = `${curItemWidth}px`;
+            this.tableColumns.splice(itemIndex, 1, {
+              ...this.tableColumns[itemIndex],
+              width: `${curItemWidth}px`,
+            });
           });
         } else if (settleColumnLength > 0) {
           this.tableColumns[settleWidthColumns[settleColumnLength - 1]].width = `${this.wrapAreaWidth - withOutLastColumnWidth}px`;
@@ -1025,7 +1108,7 @@ export default {
     getExpandStatus(rowData) {
       const expandKey = rowData[this.config.rowKey];
       let backData = '';
-      if (this.expandData[expandKey]) {
+      if (this.expandData?.[expandKey]) {
         backData = this.expandData[expandKey].isOpen ? 'open' : 'close';
       }
       return backData;
@@ -1035,8 +1118,15 @@ export default {
      * getRowSpan为设置当前页的行合并数据
      */
     getShowData() {
-      const begin = (this.pageDataUse.page - 1) * this.pageDataUse.size;
-      const end = begin + this.pageDataUse.size;
+      let begin = 0;
+      let end = 0;
+      if (this.isWaterfall) {
+        begin = 0;
+        end = this.pageDataUse.size * this.pageDataUse.page;
+      } else {
+        begin = (this.pageDataUse.page - 1) * this.pageDataUse.size;
+        end = begin + this.pageDataUse.size;
+      }
       // this.showData = this.getRowSpan(this.dataUse.slice(begin, end));
       let useData = [];
       if (this.pivotTable && this.pivotTable.length > 0) {
@@ -1045,6 +1135,7 @@ export default {
         useData = this.getRowSpan(this.dataUse.slice(begin, end));
       }
       this.getShowDataWithExpand(useData);
+      this.isLoadWaterfallData = false;
     },
     /**
      * 设置 showData 里的 expand 数据
@@ -1104,6 +1195,21 @@ export default {
         }
       });
       this.showData = newShowData;
+    },
+    /**
+     * checkbox 选中
+     */
+    getCheckboxSelectedAll() {
+      let isSelectAll = false;
+      if (this.checkboxSelectedData) {
+        isSelectAll = true;
+        this.showData.forEach((item) => {
+          if (!this.checkboxSelectedData.includes(item[this.config.rowKey])) {
+            isSelectAll = false;
+          }
+        });
+      }
+      this.isCheckboxSelectAll = isSelectAll;
     },
     /**
      * 获取 expand 的 tr 的 getExpandRowRefKey
@@ -1354,13 +1460,17 @@ export default {
             if (this.isHasFilter()) {
               this.dataUse = this.getFilterData(this.dataUse, this.filterData);
             }
-            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            if (this.sortData?.dataIndex) {
+              this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            }
             break;
           case 'filter':
             if (this.isHasSearch()) {
               this.dataUse = this.getSearchData(this.dataUse, this.searchData);
             }
-            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            if (this.sortData?.dataIndex) {
+              this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            }
             break;
           case 'sort':
             if (this.isHasFilter()) {
@@ -1377,7 +1487,9 @@ export default {
             if (this.isHasSearch()) {
               this.dataUse = this.getSearchData(this.dataUse, this.searchData);
             }
-            this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            if (this.sortData?.dataIndex) {
+              this.doSortData(this.sortData.dataIndex, this.sortData.sortType);
+            }
             break;
           default:
             break;
@@ -1568,6 +1680,7 @@ export default {
      */
     doSortData(dataIndex, sortType) {
       if (sortType && sortType !== 'init') {
+        const dataType = this.sortData.dataType || 'string';
         this.dataUse.sort((prev, next) => {
           let back = 0;
           let prevValue = '';
@@ -1577,6 +1690,23 @@ export default {
           }
           if (next[dataIndex]) {
             nextValue = next[dataIndex].value || next[dataIndex];
+          }
+          if (dataType === 'number') {
+            const prevValueSplit = prevValue.split(' ');
+            if (prevValueSplit.length > 1) {
+              [, prevValue] = prevValueSplit;
+            }
+            prevValue = prevValue.replace(',', '');
+            prevValue = prevValue.replace('%', '');
+            prevValue = parseFloat(prevValue) || 0;
+            //
+            const nextValueSplit = nextValue.split(' ');
+            if (nextValueSplit.length > 1) {
+              [, nextValue] = nextValueSplit;
+            }
+            nextValue = nextValue.replace(',', '');
+            nextValue = nextValue.replace('%', '');
+            nextValue = parseFloat(nextValue) || 0;
           }
           if (sortType === 'up') {
             if (prevValue < nextValue) {
@@ -1633,6 +1763,17 @@ export default {
         page: currentPage, // 当前页码
         total: this.dataAmount, // 当前条件下的数据总条数
       });
+    },
+    /**
+     * 无限滚动数据
+     */
+    getWaterfallData(data) {
+      let backData = data;
+      const pivotTableLength = this.pivotTable.length;
+      for (let i = 0; i < pivotTableLength; i += 1) {
+        backData = this.computePivotTableData(this.pivotTable[i - 1], this.pivotTable[i], backData);
+      }
+      return backData;
     },
     /**
      * 如果开启透视表 pivotTable，重组数组的 rowSpan
@@ -1792,6 +1933,76 @@ export default {
         data,
       });
     },
+    /**
+     * 表头全选按钮
+     */
+    handleTHCheckbox(selected) {
+      const curSelectedData = [...this.checkboxSelectedData];
+      const isSelected = selected.target.checked;
+      if (isSelected) {
+        // 补齐未选中
+        forEach(this.showData, (itemData) => {
+          const itemKey = itemData[this.config.rowKey];
+          if (!curSelectedData.includes(itemKey)) {
+            curSelectedData.push(itemData[this.config.rowKey]);
+          }
+        });
+      } else {
+        // 删除已选中
+        forEach(this.showData, (itemData) => {
+          const itemKey = itemData[this.config.rowKey];
+          if (curSelectedData.includes(itemKey)) {
+            const index = curSelectedData.findIndex((selectedItem) => selectedItem === itemKey);
+            if (index > -1) {
+              curSelectedData.splice(index, 1);
+            }
+          }
+        });
+      }
+      this.emitTo('checkbox', {
+        select: curSelectedData,
+      });
+    },
+    /**
+     * 表格全选按钮
+     */
+    handleTDCheckbox(selected, record) {
+      const isSelected = selected.target.checked;
+      const curSelectedData = [...this.checkboxSelectedData];
+      const itemKey = record[this.config.rowKey];
+      if (isSelected) {
+        // 补齐未选中
+        if (!curSelectedData.includes(itemKey)) {
+          curSelectedData.push(itemKey);
+        }
+      } else {
+        // 删除已选中
+        const index = curSelectedData.findIndex((selectedItem) => selectedItem === itemKey);
+        if (index > -1) {
+          curSelectedData.splice(index, 1);
+        }
+      }
+      this.emitTo('checkbox', {
+        select: curSelectedData,
+      });
+    },
+    /**
+     * 无限滚动滚动条监听
+     */
+    handleScroll(event) {
+      if (this.isWaterfall && !this.isLoadWaterfallData) {
+        const { clientHeight, scrollHeight, scrollTop } = event.target;
+        const curHeight = scrollTop + clientHeight;
+        if (scrollHeight - curHeight < 200) {
+          this.isLoadWaterfallData = true;
+          const curUseDataLength = this.pageDataUse.page * this.pageDataUse.size;
+          if (this.data.length > curUseDataLength) {
+            this.pageDataUse.page += 1;
+            this.getShowData();
+          }
+        }
+      }
+    },
   },
 };
 </script>
@@ -1813,13 +2024,18 @@ export default {
       top: 48px;
       background-color: @lineColor;
     }
+    .x-sticky-top-shadow{
+      box-shadow: 0 5px 5px rgba(173, 179, 190, 0.44);
+    }
     .x-sticky-left-shadow{
       display: none;
-      box-shadow: 2px 0 5px rgba(173, 179, 190, 0.44);
+      // box-shadow: 5px 0 5px rgba(173, 179, 190, 0.44);
+      box-shadow: 0px 0 8px #000;
     }
     .x-sticky-right-shadow{
       display: none;
-      box-shadow: -2px 0 5px rgba(173, 179, 190, 0.44);
+      // box-shadow: -2px 0 5px rgba(173, 179, 190, 0.44);
+      box-shadow: 0px 0 8px #000;
     }
     .x-table-fix-header{
       top: 0;
@@ -1849,6 +2065,11 @@ export default {
       border-left: 1px solid @lineColor;
       border-right: 1px solid @lineColor;
       border-top: 1px solid @lineColor;
+    }
+    .x-expand-child {
+      > td {
+        background-color: #F5F5F5;
+      }
     }
     /deep/ .x-resize-dom-handle {
       position: absolute;
@@ -1951,6 +2172,17 @@ export default {
       }
       tfoot {
         border-top: 1px solid @lineColor;
+      }
+      &::-webkit-scrollbar {
+        height: 8px;
+        width:8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        border-radius: 8px;
+        background-color: #e9ecee;
+      }
+      &::-webkit-scrollbar-track {
+        background-color: transparent;
       }
     }
   }
