@@ -13,8 +13,9 @@ module.exports = {
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-    'camelcase': ['error', { 'allow': ["aa_bb"] }],
+    camelcase: ['error', { allow: ['aa_bb'] }],
     'max-len': ['error', { code: 300 }],
-    'import/no-extraneous-dependencies': ['error', {'devDependencies': true}]
+    'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    'no-lonely-if': 'off',
   },
 };

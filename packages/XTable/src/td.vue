@@ -65,7 +65,6 @@
     >
       <slot :name="`${from}-drag`"></slot>
     </span>
-
     <span
       v-if="from === 'th' && rowIndex === 0 && resizeColumns.includes(columnItem.dataIndex)"
       class="x-resize-dom-handle"
