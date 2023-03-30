@@ -1,21 +1,31 @@
 # x-table-vue
 
-> 表格列拖动改变宽度，表头列互换，固定表头，合并单元格。
-> localstorage 保存表头交互数据。
-> 行展开收起。
-> 透视表功能。
-> customCell 自定义单元格的 class 和 style
-> extend 参与筛选
-> checkbox 选择列
-> waterfall 滚动加载更多
+> 表格功能的 VUE 实现。
 > 
 > 源码有完整示例代码。
+
+### 主要功能
+* 固定表头，浏览器和固定区域
+* 固定列
+* 分页功能
+* 拖动调整列宽度
+* 列的拖拽交互
+* 单元格合并
+* 行展开收起
+* extend 行参与筛选
+* 透视表功能
+* 自定义单元格的 class 和 style
+* 表格底部
+* 表头搜索、筛选、排序
+* checkbox 选择列
+* waterfall 滚动加载更多
+* 组件单元格
 
 [Demo](https://mikexia930.github.io/xTable/)
 
 ### 版本
 ***
-* v4.0.0
+* v4.0.1
 
 ### 基于
 ***
