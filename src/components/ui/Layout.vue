@@ -1,7 +1,10 @@
 <template>
   <div class="layout_content">
     <div class="layout_left">
-      <div class="header"></div>
+      <div class="header">
+        <div>XTable V4.0.2</div>
+        <a href="https://github.com/mikexia930/xTable/tree/master/src/views" target="_blank">查看示例源码</a>
+      </div>
       <div class="menu">
         <ul>
           <li :key="menu.value" v-for="(menu) in menus">
@@ -133,6 +136,20 @@ export default {
     background-color: #f1f1f1;
     .header {
       height: 68px;
+      border-bottom: 1px solid #c1c1c1;
+      margin-bottom: 12px;
+      > div {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 12px;
+        margin-top: 12px;
+      }
+      a {
+        color: #ff4d4f;
+        text-align: center;
+        display: block;
+      }
     }
     .menu {
       li {

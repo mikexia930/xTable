@@ -115,10 +115,13 @@
         :id="domInit.content"
         class="x-table-content"
         :class="contentBorder"
-        :style="styleTable"
+        :style="{
+          width: styleTable.width,
+          height: tableHeight
+        }"
         @scroll="handleScroll"
       >
-        <div>
+        <div :id="domInit.table">
           <table class="x-fixed-table">
             <colgroup>
               <col
@@ -425,10 +428,12 @@ export default {
         right: `${this.config.key}-x-sticky-right-shadow`, // right sticky的阴影条
         leftHeader: `${this.config.key}-x-sticky-left-header-shadow`, // 表头 left sticky的阴影条
         rightHeader: `${this.config.key}-x-sticky-right-header-shadow`, // 表头 right sticky的阴影条
+        table: `${this.config.key}-x-table`, // 表格本身
       },
       debounceInitWrap: null,
       isCheckboxSelectAll: false,
       isLoadWaterfallData: false,
+      tableHeight: this.config.scrollHeight,
     };
   },
   computed: {
@@ -1136,6 +1141,19 @@ export default {
       }
       this.getShowDataWithExpand(useData);
       this.isLoadWaterfallData = false;
+
+      // 如果固定表格高度的时候，自适应表格高度
+      this.$nextTick(() => {
+        const tableDom = this.getDomMap('dynamic', 'table');
+        if (tableDom) {
+          const tableHeight = tableDom.clientHeight;
+          if (this.isUseSingleTable && tableHeight < parseFloat(this.styleTable.height)) {
+            this.tableHeight = `${tableHeight}px`;
+          } else {
+            this.tableHeight = this.styleTable.height;
+          }
+        }
+      });
     },
     /**
      * 设置 showData 里的 expand 数据
