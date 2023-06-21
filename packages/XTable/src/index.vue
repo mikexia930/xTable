@@ -703,8 +703,14 @@ export default {
       this.$nextTick(() => {
         this.initDom();
       });
-      this.resizeObserver = new ResizeObserver(() => {
-        this.debounceInitWrap();
+      this.resizeObserver = new ResizeObserver((entries) => {
+        let contentWidth = 0;
+        if (entries) {
+          contentWidth = entries?.[0]?.contentRect?.width || 0;
+        }
+        if (contentWidth > 0 && contentWidth !== this.wrapAreaWidth) {
+          this.debounceInitWrap();
+        }
       });
       this.resizeObserver.observe(this.getDomMap('dynamic', 'wrap'));
     }
