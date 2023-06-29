@@ -14,7 +14,7 @@
   >
     <div
       :title="noWrap && isUseNoWrapTitle ? getTdValue : null"
-      :class="noWrap ? 'x-td-nowrap' : 'x-td'"
+      :class="getTdWrapClass"
       :style="{ width: isSpanExpand ? null : getTdWidth(columnIndex, getColSpan) }"
     >
       <slot
@@ -77,6 +77,19 @@
 <script>
 export default {
   computed: {
+    getTdWrapClass() {
+      let useClass = 'x-td';
+      if (this.from === 'th') {
+        if (this.isUseNoWrapTitle) {
+          useClass = 'x-td-nowrap';
+        } else {
+          useClass = 'x-td x-td-title';
+        }
+      } else if (this.noWrap) {
+        useClass = 'x-td-nowrap';
+      }
+      return useClass;
+    },
     getColSpan() {
       let backData = 1;
       if (typeof this.rowItem[this.columnItem.dataIndex] === 'object') {
@@ -270,6 +283,16 @@ td{
   }
   &.x-right {
     text-align: right !important;
+    .x-td-nowrap {
+      justify-content: flex-end;
+    }
+    .x-td-title {
+      justify-content: flex-end;
+    }
+  }
+  .x-td-title {
+    display: flex;
+    align-items: center;
   }
   .x-td {
     white-space:pre-wrap;
