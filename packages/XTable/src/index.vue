@@ -31,69 +31,68 @@
               :key="`thr-${config.key}-${titleIndex}`"
               :class="titleItem.$class"
             >
-              <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                <x-td
-                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                  from="th"
-                  :is-sticky="isSticky"
-                  :padding-length="paddingLength"
-                  :no-wrap="config.noWrap"
-                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                  :row-index="titleIndex"
-                  :row-item="titleItem"
-                  :clean-row-item="titleItem"
-                  :column-index="columnIndex"
-                  :column-item="columnItem"
-                  :colgroup-data="colgroupData"
-                  :sticky-left-columns="stickyLeftColumns"
-                  :sticky-right-columns="stickyRightColumns"
-                  :column-length="tableColumns.length"
-                  :drag-columns="dragColumns"
-                  :resize-columns="resizeColumns"
-                  :custom-cell="customCell ? customCell.header : null"
-                >
-                  <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                    <slot
-                      :name="`th-${columnItem.dataIndex}`"
-                      :record="record"
-                      :text="text"
-                      :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
-                      :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
-                    >
-                      <template v-if="columnItem.dataIndex === 'checkbox'">
-                        <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
-                      </template>
-                    </slot>
-                  </template>
-                  <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-sort-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-search-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-filter-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:th-drag>
-                    <slot :name="`th-drag`"></slot>
-                  </template>
-                  <template v-slot:th-resize>
-                    <slot :name="`th-resize`"></slot>
-                  </template>
-                </x-td>
-              </template>
+              <x-td
+                v-for="(columnItem, columnIndex) in tableColumnsHead"
+                :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                from="th"
+                :is-sticky="isSticky"
+                :padding-length="paddingLength"
+                :no-wrap="config.noWrap"
+                :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                :row-index="titleIndex"
+                :row-item="titleItem"
+                :clean-row-item="titleItem"
+                :column-index="columnIndex"
+                :column-item="columnItem"
+                :colgroup-data="colgroupData"
+                :sticky-left-columns="stickyLeftColumns"
+                :sticky-right-columns="stickyRightColumns"
+                :column-length="tableColumns.length"
+                :drag-columns="dragColumns"
+                :resize-columns="resizeColumns"
+                :custom-cell="customCell ? customCell.header : null"
+              >
+                <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
+                  <slot
+                    :name="`th-${columnItem.dataIndex}`"
+                    :record="record"
+                    :text="text"
+                    :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
+                    :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
+                  >
+                    <template v-if="columnItem.dataIndex === 'checkbox'">
+                      <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
+                    </template>
+                  </slot>
+                </template>
+                <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-sort-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-search-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-filter-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:th-drag>
+                  <slot :name="`th-drag`"></slot>
+                </template>
+                <template v-slot:th-resize>
+                  <slot :name="`th-resize`"></slot>
+                </template>
+              </x-td>
             </tr>
             </thead>
           </table>
@@ -136,69 +135,68 @@
               :key="`thr-${config.key}-${titleIndex}`"
               :class="titleItem.$class"
             >
-              <template v-for="(columnItem, columnIndex) in tableColumnsHead">
-                <x-td
-                  :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
-                  from="th"
-                  :is-sticky="isSticky"
-                  :padding-length="paddingLength"
-                  :no-wrap="config.noWrap"
-                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                  :row-index="titleIndex"
-                  :row-item="titleItem"
-                  :clean-row-item="titleItem"
-                  :column-index="columnIndex"
-                  :column-item="columnItem"
-                  :colgroup-data="colgroupData"
-                  :sticky-left-columns="stickyLeftColumns"
-                  :sticky-right-columns="stickyRightColumns"
-                  :column-length="tableColumns.length"
-                  :drag-columns="dragColumns"
-                  :resize-columns="resizeColumns"
-                  :custom-cell="customCell ? customCell.header : null"
-                >
-                  <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
-                    <slot
-                      :name="`th-${columnItem.dataIndex}`"
-                      :record="record"
-                      :text="text"
-                      :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
-                      :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
-                    >
-                      <template v-if="columnItem.dataIndex === 'checkbox'">
-                        <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
-                      </template>
-                    </slot>
-                  </template>
-                  <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-sort-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-search-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
-                    <slot
-                      :name="`th-filter-${columnItem.dataIndex}`"
-                      :record="record"
-                      :dataIndex="dataIndex"
-                    ></slot>
-                  </template>
-                  <template v-slot:th-drag>
-                    <slot :name="`th-drag`"></slot>
-                  </template>
-                  <template v-slot:th-resize>
-                    <slot :name="`th-resize`"></slot>
-                  </template>
-                </x-td>
-              </template>
+              <x-td
+                v-for="(columnItem, columnIndex) in tableColumnsHead"
+                :key="`th-${config.key}-${titleItem[config.rowKey]}-${titleIndex}-${columnItem.dataIndex}`"
+                from="th"
+                :is-sticky="isSticky"
+                :padding-length="paddingLength"
+                :no-wrap="config.noWrap"
+                :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                :row-index="titleIndex"
+                :row-item="titleItem"
+                :clean-row-item="titleItem"
+                :column-index="columnIndex"
+                :column-item="columnItem"
+                :colgroup-data="colgroupData"
+                :sticky-left-columns="stickyLeftColumns"
+                :sticky-right-columns="stickyRightColumns"
+                :column-length="tableColumns.length"
+                :drag-columns="dragColumns"
+                :resize-columns="resizeColumns"
+                :custom-cell="customCell ? customCell.header : null"
+              >
+                <template v-slot:[`th-${columnItem.dataIndex}`]="{ record, text}">
+                  <slot
+                    :name="`th-${columnItem.dataIndex}`"
+                    :record="record"
+                    :text="text"
+                    :checkbox="columnItem.dataIndex === 'checkbox' ? handleTHCheckbox : null"
+                    :checked="columnItem.dataIndex === 'checkbox' ? isCheckboxSelectAll: null"
+                  >
+                    <template v-if="columnItem.dataIndex === 'checkbox'">
+                      <input type="checkbox" v-model="isCheckboxSelectAll" @input="handleTHCheckbox" />
+                    </template>
+                  </slot>
+                </template>
+                <template v-slot:[`th-sort-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-sort-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:[`th-search-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-search-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:[`th-filter-${columnItem.dataIndex}`]="{ record, dataIndex}">
+                  <slot
+                    :name="`th-filter-${columnItem.dataIndex}`"
+                    :record="record"
+                    :dataIndex="dataIndex"
+                  ></slot>
+                </template>
+                <template v-slot:th-drag>
+                  <slot :name="`th-drag`"></slot>
+                </template>
+                <template v-slot:th-resize>
+                  <slot :name="`th-resize`"></slot>
+                </template>
+              </x-td>
             </tr>
             </thead>
             <tbody>
@@ -212,90 +210,88 @@
               </tr>
             </template>
             <template v-else>
-              <template v-for="(rowItem, rowIndex) in showData">
-                <tr
-                  :key="`tdr-${config.key}-${rowIndex}`"
-                  :class="rowItem.$expandType ? 'x-expand-child' : rowItem.$class"
-                  :ref="rowItem.$expandKey"
-                >
-                  <template v-if="rowItem.$expandType && rowItem.$expandType === 'span'">
-                    <x-td
-                      :key="`td-${config.key}-${rowIndex}-${rowItem[config.rowKey]}`"
-                      from="td"
-                      :is-span-expand="true"
-                      :is-sticky="isSticky"
-                      :padding-length="paddingLength"
-                      :no-wrap="config.noWrap"
-                      :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                      :row-index="rowIndex"
-                      :row-item="rowItem"
-                      :clean-row-item="getCleanRowItem('td', rowItem)"
-                      :column-index="0"
-                      :column-item="getExpandSpanColumnData"
-                      :colgroup-data="colgroupData"
-                      :column-length="tableColumns.length"
-                      :custom-cell="customCell ? customCell.body : null"
+              <tr
+                v-for="(rowItem, rowIndex) in showData"
+                :key="`tdr-${config.key}-${rowIndex}`"
+                :class="rowItem.$expandType ? 'x-expand-child' : rowItem.$class"
+                :ref="rowItem.$expandKey"
+              >
+                <template v-if="rowItem.$expandType && rowItem.$expandType === 'span'">
+                  <x-td
+                    :key="`td-${config.key}-${rowIndex}-${rowItem[config.rowKey]}`"
+                    from="td"
+                    :is-span-expand="true"
+                    :is-sticky="isSticky"
+                    :padding-length="paddingLength"
+                    :no-wrap="config.noWrap"
+                    :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                    :row-index="rowIndex"
+                    :row-item="rowItem"
+                    :clean-row-item="getCleanRowItem('td', rowItem)"
+                    :column-index="0"
+                    :column-item="getExpandSpanColumnData"
+                    :colgroup-data="colgroupData"
+                    :column-length="tableColumns.length"
+                    :custom-cell="customCell ? customCell.body : null"
+                  >
+                    <template
+                      v-slot:[`td-${getExpandSpanColumnData.dataIndex}`]="{
+                          record,
+                          text,
+                          expand
+                        }"
                     >
-                      <template
-                        v-slot:[`td-${getExpandSpanColumnData.dataIndex}`]="{
-                            record,
-                            text,
-                            expand
-                          }"
-                      >
-                        <slot
-                          :name="`td-${getExpandSpanColumnData.dataIndex}`"
-                          :record="record"
-                          :text="text"
-                          :expand="expand"
-                        />
-                      </template>
-                    </x-td>
-                  </template>
-                  <template v-else>
-                    <template v-for="(columnItem, columnIndex) in tableColumns">
-                      <x-td
-                        :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
-                        from="td"
-                        :is-sticky="isSticky"
-                        :padding-length="paddingLength"
-                        :no-wrap="config.noWrap"
-                        :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                        :row-index="rowIndex"
-                        :row-item="rowItem"
-                        :clean-row-item="getCleanRowItem('td', rowItem)"
-                        :column-index="columnIndex"
-                        :column-item="columnItem"
-                        :colgroup-data="colgroupData"
-                        :sticky-left-columns="stickyLeftColumns"
-                        :sticky-right-columns="stickyRightColumns"
-                        :column-length="tableColumns.length"
-                        :custom-cell="customCell ? customCell.body : null"
-                        :expand-status="getExpandStatus(rowItem)"
-                      >
-                        <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
-                          <slot
-                            :name="`td-${columnItem.dataIndex}`"
-                            :record="record"
-                            :text="text"
-                            :expand="expand"
-                            :checkbox="columnItem.dataIndex === 'checkbox' ? handleTDCheckbox : null"
-                            :checked="columnItem.dataIndex === 'checkbox' ? checkboxSelectedData.includes(record[config.rowKey]): null"
-                          >
-                            <template v-if="columnItem.dataIndex === 'checkbox'">
-                              <input
-                                type="checkbox"
-                                :checked="checkboxSelectedData.includes(record[config.rowKey])"
-                                @input="(selected) => handleTDCheckbox(selected, record)"
-                              />
-                            </template>
-                          </slot>
-                        </template>
-                      </x-td>
+                      <slot
+                        :name="`td-${getExpandSpanColumnData.dataIndex}`"
+                        :record="record"
+                        :text="text"
+                        :expand="expand"
+                      />
                     </template>
-                  </template>
-                </tr>
-              </template>
+                  </x-td>
+                </template>
+                <template v-else>
+                  <x-td
+                    v-for="(columnItem, columnIndex) in tableColumns"
+                    :key="`td-${config.key}-${rowIndex}-${columnIndex}`"
+                    from="td"
+                    :is-sticky="isSticky"
+                    :padding-length="paddingLength"
+                    :no-wrap="config.noWrap"
+                    :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                    :row-index="rowIndex"
+                    :row-item="rowItem"
+                    :clean-row-item="getCleanRowItem('td', rowItem)"
+                    :column-index="columnIndex"
+                    :column-item="columnItem"
+                    :colgroup-data="colgroupData"
+                    :sticky-left-columns="stickyLeftColumns"
+                    :sticky-right-columns="stickyRightColumns"
+                    :column-length="tableColumns.length"
+                    :custom-cell="customCell ? customCell.body : null"
+                    :expand-status="getExpandStatus(rowItem)"
+                  >
+                    <template v-slot:[`td-${columnItem.dataIndex}`]="{ record, text, expand }">
+                      <slot
+                        :name="`td-${columnItem.dataIndex}`"
+                        :record="record"
+                        :text="text"
+                        :expand="expand"
+                        :checkbox="columnItem.dataIndex === 'checkbox' ? handleTDCheckbox : null"
+                        :checked="columnItem.dataIndex === 'checkbox' ? checkboxSelectedData.includes(record[config.rowKey]): null"
+                      >
+                        <template v-if="columnItem.dataIndex === 'checkbox'">
+                          <input
+                            type="checkbox"
+                            :checked="checkboxSelectedData.includes(record[config.rowKey])"
+                            @input="(selected) => handleTDCheckbox(selected, record)"
+                          />
+                        </template>
+                      </slot>
+                    </template>
+                  </x-td>
+                </template>
+              </tr>
             </template>
             </tbody>
             <tfoot v-if="footerData && footerData.length > 0">
@@ -304,34 +300,33 @@
               :key="`tfr-${config.key}-${rowIndex}`"
               :class="rowItem.$class"
             >
-              <template v-for="(columnItem, columnIndex) in tableColumns">
-                <x-td
-                  :key="`tf-${config.key}-${rowIndex}-${columnIndex}`"
-                  from="tf"
-                  :is-sticky="isSticky"
-                  :padding-length="paddingLength"
-                  :no-wrap="config.noWrap"
-                  :is-use-no-wrap-title="config.isUseNoWrapTitle"
-                  :row-index="rowIndex"
-                  :row-item="rowItem"
-                  :clean-row-item="getCleanRowItem('tf', rowItem)"
-                  :column-index="columnIndex"
-                  :column-item="columnItem"
-                  :colgroup-data="colgroupData"
-                  :sticky-left-columns="stickyLeftColumns"
-                  :sticky-right-columns="stickyRightColumns"
-                  :column-length="tableColumns.length"
-                  :custom-cell="customCell ? customCell.footer : null"
-                >
-                  <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
-                    <slot
-                      :name="`tf-${columnItem.dataIndex}`"
-                      :record="record"
-                      :text="text"
-                    ></slot>
-                  </template>
-                </x-td>
-              </template>
+              <x-td
+                v-for="(columnItem, columnIndex) in tableColumns"
+                :key="`tf-${config.key}-${rowIndex}-${columnIndex}`"
+                from="tf"
+                :is-sticky="isSticky"
+                :padding-length="paddingLength"
+                :no-wrap="config.noWrap"
+                :is-use-no-wrap-title="config.isUseNoWrapTitle"
+                :row-index="rowIndex"
+                :row-item="rowItem"
+                :clean-row-item="getCleanRowItem('tf', rowItem)"
+                :column-index="columnIndex"
+                :column-item="columnItem"
+                :colgroup-data="colgroupData"
+                :sticky-left-columns="stickyLeftColumns"
+                :sticky-right-columns="stickyRightColumns"
+                :column-length="tableColumns.length"
+                :custom-cell="customCell ? customCell.footer : null"
+              >
+                <template v-slot:[`tf-${columnItem.dataIndex}`]="{ record, text}">
+                  <slot
+                    :name="`tf-${columnItem.dataIndex}`"
+                    :record="record"
+                    :text="text"
+                  ></slot>
+                </template>
+              </x-td>
             </tr>
             </tfoot>
           </table>
